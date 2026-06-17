@@ -1,0 +1,87 @@
+export type ToneKey = "default" | "gentle" | "firm";
+
+/** Sound Recipe id（声景配方） */
+export type SoundscapeId = "confidence" | "calm" | "focus" | "reset" | "sleep";
+
+export type MoodKey = "gentle" | "ethereal" | "firm" | "bright";
+export type DistanceKey = "near" | "mid" | "far";
+export type VoiceLevelKey = "clear" | "soft" | "surround";
+export type RhythmKey = "none" | "light" | "strong";
+
+/** 用户选择的使用场景 */
+export type SceneKey = "interview" | "exam" | "sleep" | "study" | "other";
+
+/** 三段式输入：当下状态 / 想抵达的状态 / 不想听到的内容 */
+export interface UserInput {
+  scene: SceneKey;
+  state: string;
+  target: string;
+  avoid: string;
+}
+
+/** AI（或模板兜底）生成的肯定语脚本 */
+export interface Affirmation {
+  title: string; // 《我正在慢慢稳定下来》
+  scene: string; // 适合场景：睡前 / 面试前 / 通勤路上
+  emotionTags: string[]; // 焦虑、压力、自我怀疑
+  understanding: string; // AI 对状态本质的理解（如：你不是能力不足，而是对未知结果感到失控）
+  targetState: string; // 目标状态（如：稳定、自信、可行动）
+  strategy: string[]; // 生成策略（如：降低比较感、恢复掌控感、强化行动感）
+  lines: string[]; // 5-6 句肯定语
+  anchorLine: string; // 核心心声：最适合朗读、最打动人的一句
+  suggestedSoundscape: SoundscapeId;
+  mood: MoodKey;
+  source: "deepseek" | "fallback";
+}
+
+/** 音轨混音参数 */
+export interface MixParams {
+  soundscape: SoundscapeId;
+  distance: DistanceKey;
+  voiceLevel: VoiceLevelKey;
+  rhythm: RhythmKey;
+  mood: MoodKey;
+}
+
+/** 录音结果 */
+export interface VoiceTake {
+  blob: Blob;
+  url: string;
+  durationSec: number;
+  mimeType: string;
+}
+
+/** 情绪评分（1-5）：紧张程度 + 自信程度 */
+export interface EmotionScore {
+  tension: number;
+  confidence: number;
+}
+
+export interface Ratings {
+  before: EmotionScore;
+  after: EmotionScore;
+}
+
+/** 最终生成的音轨 */
+export interface Track {
+  id: string;
+  title: string;
+  scene: string;
+  emotionTags: string[];
+  understanding: string;
+  lines: string[];
+  anchorLine: string;
+  params: MixParams;
+  audioBlobUrl: string; // 混音后 mp3 object URL（仅本会话）
+  coverDataUrl: string; // 封面 png dataURL
+  durationSec: number;
+  ratings?: Ratings;
+  createdAt: number;
+}
+
+export type WizardStep =
+  | "input"
+  | "affirmation"
+  | "record"
+  | "soundscape"
+  | "result";

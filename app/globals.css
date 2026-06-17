@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0a0a14;
+  --color-ink-soft: #12121f;
+  --color-mist: #e9e6f5;
+  --color-mist-soft: #b8b3d4;
+  --color-haze: #8b86a8;
+  --color-aura: #a78bfa;
+  --color-aura-deep: #7c6df0;
+  --color-glow: #f0abfc;
+  --color-calm: #67e8f9;
+
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-mist);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ambient animated aurora background */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 50% at 20% 15%, rgba(124, 109, 240, 0.22), transparent 70%),
+    radial-gradient(55% 45% at 85% 25%, rgba(240, 171, 252, 0.14), transparent 70%),
+    radial-gradient(70% 60% at 50% 95%, rgba(103, 232, 249, 0.12), transparent 70%),
+    var(--color-ink);
+}
+
+.aurora::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(35% 35% at 30% 40%, rgba(167, 139, 250, 0.25), transparent 60%),
+    radial-gradient(30% 30% at 70% 60%, rgba(240, 171, 252, 0.18), transparent 60%);
+  filter: blur(60px);
+  animation: drift 26s ease-in-out infinite alternate;
+}
+
+.aurora::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate3d(-4%, -2%, 0) rotate(0deg) scale(1.05);
+  }
+  100% {
+    transform: translate3d(5%, 4%, 0) rotate(8deg) scale(1.15);
+  }
+}
+
+.glass {
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.text-gradient {
+  background: linear-gradient(120deg, #f0abfc 0%, #a78bfa 45%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--color-aura-deep), var(--color-glow));
+  color: #0a0a14;
+  font-weight: 600;
+  box-shadow: 0 10px 40px -12px rgba(167, 139, 250, 0.7);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 50px -12px rgba(167, 139, 250, 0.85);
+  filter: brightness(1.05);
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--color-mist-soft);
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: rgba(167, 139, 250, 0.6);
+  color: var(--color-mist);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+textarea,
+input {
+  font-family: inherit;
+}
+
+::selection {
+  background: rgba(167, 139, 250, 0.35);
+}
+
+/* slim scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.25);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before {
+    animation: none;
+  }
+}
