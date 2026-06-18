@@ -14,12 +14,14 @@ export default function RecordStep({
   lines,
   initialTake,
   onDone,
+  onQuickGenerate,
   onBack,
 }: {
   anchorLine: string;
   lines: string[];
   initialTake: VoiceTake | null;
   onDone: (take: VoiceTake) => void;
+  onQuickGenerate?: (take: VoiceTake) => void;
   onBack: () => void;
 }) {
   const [status, setStatus] = useState<Status>(initialTake ? "recorded" : "idle");
@@ -203,19 +205,35 @@ export default function RecordStep({
             <span className="h-3 w-3 rounded-sm bg-white" /> 停止录音
           </button>
         ) : (
-          <div className="flex items-center gap-3">
-            <button onClick={reRecord} className="btn-ghost rounded-full px-6 py-3 text-sm">
-              重录
-            </button>
-            <button
-              onClick={() =>
-                take && consent && take.durationSec >= MIN_TAKE_SEC && onDone(take)
-              }
-              disabled={!consent || !take || take.durationSec < MIN_TAKE_SEC}
-              className="btn-primary rounded-full px-7 py-3 text-base disabled:opacity-50"
-            >
-              下一步：选声景 →
-            </button>
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              <button onClick={reRecord} className="btn-ghost rounded-full px-6 py-3 text-sm">
+                重录
+              </button>
+              <button
+                onClick={() =>
+                  take && consent && take.durationSec >= MIN_TAKE_SEC && onDone(take)
+                }
+                disabled={!consent || !take || take.durationSec < MIN_TAKE_SEC}
+                className="btn-primary rounded-full px-7 py-3 text-base disabled:opacity-50"
+              >
+                下一步：选背景音 →
+              </button>
+            </div>
+            {onQuickGenerate && (
+              <button
+                onClick={() =>
+                  take &&
+                  consent &&
+                  take.durationSec >= MIN_TAKE_SEC &&
+                  onQuickGenerate(take)
+                }
+                disabled={!consent || !take || take.durationSec < MIN_TAKE_SEC}
+                className="text-sm text-[var(--color-haze)] transition-colors hover:text-[var(--color-mist)] disabled:opacity-40"
+              >
+                ⚡ 用推荐配乐直接生成（跳过调参）
+              </button>
+            )}
           </div>
         )}
         <button

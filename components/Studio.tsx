@@ -182,8 +182,8 @@ export default function Studio() {
     setStep("background");
   };
 
-  const handleGenerateTrack = async () => {
-    if (!voiceTake || !params || !affirmation) return;
+  const handleGenerateTrack = async (take: VoiceTake) => {
+    if (!params || !affirmation) return;
     setGenMix(true);
     setProgress(0);
     try {
@@ -192,7 +192,7 @@ export default function Studio() {
       await ramp(0.22, 0.45, 650, setProgress);
       // 阶段 3：混音（真实进度映射到 0.45→0.9）
       const { buffer, durationSec } = await renderMix({
-        voiceBlob: voiceTake.blob,
+        voiceBlob: take.blob,
         params,
         bgBlob: bgAudio?.blob ?? null,
         onProgress: (p) => setProgress(0.45 + p * 0.45),
@@ -360,6 +360,10 @@ export default function Studio() {
                 lines={affirmation.lines}
                 initialTake={voiceTake}
                 onDone={handleRecordDone}
+                onQuickGenerate={(take) => {
+                  setVoiceTake(take);
+                  handleGenerateTrack(take);
+                }}
                 onBack={() => setStep("affirmation")}
               />
             )}
@@ -378,7 +382,7 @@ export default function Studio() {
                 params={params}
                 onParamsChange={setParams}
                 bgAudio={bgAudio}
-                onGenerate={handleGenerateTrack}
+                onGenerate={() => voiceTake && handleGenerateTrack(voiceTake)}
                 onBack={() => setStep("background")}
                 generating={genMix}
               />
