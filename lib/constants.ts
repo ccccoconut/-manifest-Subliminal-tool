@@ -1,11 +1,11 @@
 import type {
+  BgSource,
   DistanceKey,
   MoodKey,
   RhythmKey,
   SceneKey,
   SoundscapeId,
   ToneKey,
-  VoiceLevelKey,
 } from "./types";
 
 // ---------------- 品牌 ----------------
@@ -175,10 +175,10 @@ export const DISTANCE_LABELS: Record<DistanceKey, string> = {
   far: "远",
 };
 
-export const VOICE_LEVEL_LABELS: Record<VoiceLevelKey, string> = {
-  clear: "清晰",
-  soft: "轻声",
-  surround: "环绕",
+export const DISTANCE_HINT: Record<DistanceKey, string> = {
+  near: "贴耳 · 干声",
+  mid: "适中 · 自然混响",
+  far: "空间 · 远而朦胧",
 };
 
 export const RHYTHM_LABELS: Record<RhythmKey, string> = {
@@ -186,6 +186,29 @@ export const RHYTHM_LABELS: Record<RhythmKey, string> = {
   light: "轻微",
   strong: "明显",
 };
+
+// ---------------- 背景音来源（STEP 4） ----------------
+export interface BgSourceMeta {
+  key: BgSource;
+  label: string;
+  emoji: string;
+  hint: string;
+}
+
+export const BG_SOURCES: BgSourceMeta[] = [
+  { key: "recipe", label: "AI 定制配乐", emoji: "🎼", hint: "程序实时合成、零版权，可调音乐设计" },
+  { key: "upload", label: "上传本地音频", emoji: "📁", hint: "用你自己的音乐 / 白噪作背景（需拥有使用权）" },
+  { key: "qqmusic", label: "从 QQ 音乐选择", emoji: "🎵", hint: "接入授权曲库（演示占位，敬请期待）" },
+  { key: "none", label: "不添加背景", emoji: "🔇", hint: "只保留你的声音，纯人声音轨" },
+];
+
+/** QQ 音乐接入的演示占位曲目（仅展示，不参与真实混音） */
+export const QQ_DEMO_TRACKS = [
+  { title: "晴天", artist: "周杰伦", tag: "舒缓" },
+  { title: "夜空中最亮的星", artist: "逃跑计划", tag: "鼓励" },
+  { title: "白噪 · 雨夜", artist: "TME 音效库", tag: "助眠" },
+  { title: "Lofi 专注", artist: "TME 音效库", tag: "专注" },
+];
 
 // ---------------- 情绪评分维度 ----------------
 export interface RatingDim {

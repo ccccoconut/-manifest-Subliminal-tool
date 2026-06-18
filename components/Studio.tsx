@@ -10,7 +10,8 @@ import GenerationOverlay from "@/components/ui/GenerationOverlay";
 import InputStep from "@/components/steps/InputStep";
 import AffirmationStep from "@/components/steps/AffirmationStep";
 import RecordStep from "@/components/steps/RecordStep";
-import SoundscapeStep from "@/components/steps/SoundscapeStep";
+import BackgroundStep from "@/components/steps/SoundscapeStep";
+import MixConsoleStep from "@/components/steps/MixConsoleStep";
 import ResultStep from "@/components/steps/ResultStep";
 import { APP_NAME } from "@/lib/constants";
 import { generateFallback } from "@/lib/affirmation/fallback";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/history";
 import type {
   Affirmation,
+  BgAudio,
   MixParams,
   Ratings,
   ToneKey,
@@ -46,11 +48,19 @@ function defaultParams(aff: Affirmation): MixParams {
     aff.suggestedSoundscape === "confidence" ||
     aff.suggestedSoundscape === "reset";
   return {
+    bgSource: "recipe",
     soundscape: aff.suggestedSoundscape,
     mood: aff.mood,
-    distance: "mid",
-    voiceLevel: "clear",
     rhythm: lively ? "light" : "none",
+    bgVolume: 0.95,
+    bgPitch: 0,
+    voiceVolume: 1.0,
+    voiceSpeed: 1.0,
+    voiceLoops: 1,
+    distance: "mid",
+    binaural: false,
+    binauralHz: 7,
+    effect8d: false,
   };
 }
 
@@ -92,6 +102,7 @@ export default function Studio() {
   const [input, setInput] = useState<UserInput | null>(null);
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null);
   const [voiceTake, setVoiceTake] = useState<VoiceTake | null>(null);
+  const [bgAudio, setBgAudio] = useState<BgAudio | null>(null);
   const [params, setParams] = useState<MixParams | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
   const [encoded, setEncoded] = useState<EncodedAudio | null>(null);
@@ -110,6 +121,7 @@ export default function Studio() {
     setMounted(true);
     setHistory(loadHistory());
   }, []);
+
 
   const runGenerate = useCallback(
     async (userInput: UserInput, tone: ToneKey, advance: boolean) => {
@@ -167,7 +179,7 @@ export default function Studio() {
 
   const handleRecordDone = (take: VoiceTake) => {
     setVoiceTake(take);
-    setStep("soundscape");
+    setStep("background");
   };
 
   const handleGenerateTrack = async () => {
@@ -179,11 +191,12 @@ export default function Studio() {
       await ramp(0, 0.22, 650, setProgress);
       await ramp(0.22, 0.45, 650, setProgress);
       // 阶段 3：混音（真实进度映射到 0.45→0.9）
-      const { buffer, durationSec } = await renderMix(
-        voiceTake.blob,
+      const { buffer, durationSec } = await renderMix({
+        voiceBlob: voiceTake.blob,
         params,
-        (p) => setProgress(0.45 + p * 0.45)
-      );
+        bgBlob: bgAudio?.blob ?? null,
+        onProgress: (p) => setProgress(0.45 + p * 0.45),
+      });
       const enc = encodeTrack(buffer);
       const audioBlobUrl = URL.createObjectURL(enc.blob);
       // 阶段 4：封面
@@ -285,9 +298,11 @@ export default function Studio() {
 
   const restart = () => {
     if (voiceTake) URL.revokeObjectURL(voiceTake.url);
+    if (bgAudio?.url) URL.revokeObjectURL(bgAudio.url);
     if (track) URL.revokeObjectURL(track.audioBlobUrl);
     setAffirmation(null);
     setVoiceTake(null);
+    setBgAudio(null);
     setParams(null);
     setTrack(null);
     setEncoded(null);
@@ -348,12 +363,23 @@ export default function Studio() {
                 onBack={() => setStep("affirmation")}
               />
             )}
-            {step === "soundscape" && params && (
-              <SoundscapeStep
+            {step === "background" && params && (
+              <BackgroundStep
                 params={params}
                 onParamsChange={setParams}
-                onGenerate={handleGenerateTrack}
+                bgAudio={bgAudio}
+                onBgAudioChange={setBgAudio}
+                onNext={() => setStep("mixconsole")}
                 onBack={() => setStep("record")}
+              />
+            )}
+            {step === "mixconsole" && params && (
+              <MixConsoleStep
+                params={params}
+                onParamsChange={setParams}
+                bgAudio={bgAudio}
+                onGenerate={handleGenerateTrack}
+                onBack={() => setStep("background")}
                 generating={genMix}
               />
             )}

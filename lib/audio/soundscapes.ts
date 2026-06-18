@@ -32,6 +32,8 @@ export interface BuildOpts {
   baseGain?: number;
   fadeOut?: boolean;
   duck?: { start: number; end: number; amount: number };
+  /** 整体音调偏移（半音），用于 STEP5「音调」参数 */
+  pitchSemitones?: number;
 }
 
 export interface BuildResult {
@@ -48,6 +50,8 @@ export function buildSoundscape(
   const { meta, mood, rhythm, startTime: t0, duration } = opts;
   const a = meta.audio;
   const m = MOOD[mood];
+  const pitch = opts.pitchSemitones ?? 0;
+  const pitchMul = Math.pow(2, pitch / 12);
   const baseGain = opts.baseGain ?? 1;
   const fadeIn = 2.5;
   const sources: AudioScheduledSourceNode[] = [];
@@ -98,7 +102,7 @@ export function buildSoundscape(
 
   const notes = a.chord;
   for (const interval of notes) {
-    const freq = a.rootFreq * Math.pow(2, (interval + m.octave) / 12);
+    const freq = a.rootFreq * Math.pow(2, (interval + m.octave + pitch) / 12);
     for (const sign of [-1, 1]) {
       const osc = ctx.createOscillator();
       osc.type = m.osc;
@@ -151,7 +155,7 @@ export function buildSoundscape(
   ] as const) {
     const sh = ctx.createOscillator();
     sh.type = "sine";
-    sh.frequency.value = a.rootFreq * 2;
+    sh.frequency.value = a.rootFreq * pitchMul * 2;
     sh.detune.value = sign * 1.2;
     const shGain = ctx.createGain();
     shGain.gain.value = 0.016;
@@ -173,7 +177,7 @@ export function buildSoundscape(
     pulseGain.connect(master);
     const carrier = ctx.createOscillator();
     carrier.type = "sine";
-    carrier.frequency.value = a.rootFreq / 2;
+    carrier.frequency.value = a.rootFreq * pitchMul / 2;
     carrier.connect(pulseGain);
     carrier.start(t0);
     carrier.stop(t0 + duration + 0.1);
@@ -203,7 +207,8 @@ let activePreview: { ctx: AudioContext; res: BuildResult } | null = null;
 export async function startPreview(
   id: SoundscapeId,
   mood: MoodKey,
-  rhythm: RhythmKey
+  rhythm: RhythmKey,
+  pitchSemitones = 0
 ): Promise<PreviewHandle> {
   stopPreview();
   const meta = getSoundscape(id);
@@ -217,6 +222,7 @@ export async function startPreview(
     duration: 600,
     baseGain: 0.9,
     fadeOut: false,
+    pitchSemitones,
   });
   activePreview = { ctx, res };
   return { stop: stopPreview };

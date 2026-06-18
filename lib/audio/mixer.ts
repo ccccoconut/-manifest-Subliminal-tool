@@ -1,13 +1,8 @@
 import { getSoundscape, MAX_DURATION, MIN_DURATION } from "../constants";
-import type { DistanceKey, MixParams, VoiceLevelKey } from "../types";
+import type { DistanceKey, MixParams } from "../types";
 import { createReverbIR } from "./noise";
 import { buildSoundscape } from "./soundscapes";
 
-const VOICE_GAIN: Record<VoiceLevelKey, number> = {
-  clear: 1.0,
-  soft: 0.72,
-  surround: 0.92,
-};
 const REVERB_WET: Record<DistanceKey, number> = {
   near: 0.12,
   mid: 0.28,
@@ -16,8 +11,13 @@ const REVERB_WET: Record<DistanceKey, number> = {
 
 const SR = 44100;
 const VOICE_START = 2.6;
+const LOOP_GAP = 1.2; // 人声循环之间的间隔（秒）
+const DUCK = 0.42;
 
-async function decodeVoice(blob: Blob): Promise<AudioBuffer> {
+const clamp = (v: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, v));
+
+async function decodeAudio(blob: Blob): Promise<AudioBuffer> {
   const arrayBuf = await blob.arrayBuffer();
   const tmp = new AudioContext();
   try {
@@ -32,26 +32,47 @@ export interface MixResult {
   durationSec: number;
 }
 
-/** 离线渲染：人声 + 程序化音景，含 ducking、混响、淡入淡出、归一化。 */
-export async function renderMix(
-  voiceBlob: Blob,
-  params: MixParams,
-  onProgress?: (p: number) => void
-): Promise<MixResult> {
+export interface RenderInput {
+  voiceBlob: Blob;
+  params: MixParams;
+  bgBlob?: Blob | null; // 上传/QQ音乐 的背景音
+  onProgress?: (p: number) => void;
+}
+
+/** 离线渲染：背景音（音轨1）+ 人声（音轨2）+ 双耳节拍/8D，含 ducking、混响、淡入淡出、归一化。 */
+export async function renderMix({
+  voiceBlob,
+  params,
+  bgBlob,
+  onProgress,
+}: RenderInput): Promise<MixResult> {
   onProgress?.(0.05);
-  const voiceBuf = await decodeVoice(voiceBlob);
+  const voiceBuf = await decodeAudio(voiceBlob);
+
+  let bgBuf: AudioBuffer | null = null;
+  if (params.bgSource === "upload" && bgBlob) {
+    try {
+      bgBuf = await decodeAudio(bgBlob);
+    } catch {
+      bgBuf = null;
+    }
+  }
   onProgress?.(0.2);
 
-  const voiceDur = voiceBuf.duration;
-  const duration = Math.min(
-    MAX_DURATION,
-    Math.max(MIN_DURATION, VOICE_START + voiceDur + 3.6)
+  const speed = clamp(params.voiceSpeed, 0.5, 10);
+  const loops = clamp(Math.round(params.voiceLoops), 1, 4);
+  const voicePlay = voiceBuf.duration / speed;
+  const totalVoice = voicePlay * loops + LOOP_GAP * (loops - 1);
+  const duration = clamp(
+    VOICE_START + totalVoice + 3.6,
+    MIN_DURATION,
+    MAX_DURATION
   );
-  const voiceEnd = Math.min(VOICE_START + voiceDur, duration - 1.2);
+  const voiceRegionEnd = Math.min(VOICE_START + totalVoice, duration - 1.0);
 
   const offline = new OfflineAudioContext(2, Math.ceil(duration * SR), SR);
 
-  // master bus → soft limiter → destination
+  // ---- master bus → soft limiter → destination ----
   const bus = offline.createGain();
   const limiter = offline.createDynamicsCompressor();
   limiter.threshold.value = -3;
@@ -62,70 +83,139 @@ export async function renderMix(
   bus.connect(limiter);
   limiter.connect(offline.destination);
 
-  // ---- soundscape (ducked under the voice) ----
-  buildSoundscape(offline, bus, {
-    meta: getSoundscape(params.soundscape),
-    mood: params.mood,
-    rhythm: params.rhythm,
-    startTime: 0,
-    duration,
-    baseGain: 0.95,
-    fadeOut: true,
-    duck: { start: VOICE_START, end: voiceEnd, amount: 0.42 },
-  });
+  // ---- 音轨 1 · 背景音 ----
+  const hasBg =
+    params.bgSource === "recipe" ||
+    (params.bgSource === "upload" && !!bgBuf);
 
-  // ---- voice chain ----
-  const src = offline.createBufferSource();
-  src.buffer = voiceBuf;
+  if (hasBg) {
+    const bgVol = offline.createGain();
+    bgVol.gain.value = clamp(params.bgVolume, 0, 1);
 
-  const hp = offline.createBiquadFilter();
-  hp.type = "highpass";
-  hp.frequency.value = 95;
+    // 8D 自动声像旋转
+    if (params.effect8d) {
+      const panner = offline.createStereoPanner();
+      const lfo = offline.createOscillator();
+      lfo.frequency.value = 0.12;
+      const lfoGain = offline.createGain();
+      lfoGain.gain.value = 0.95;
+      lfo.connect(lfoGain);
+      lfoGain.connect(panner.pan);
+      lfo.start(0);
+      lfo.stop(duration);
+      bgVol.connect(panner);
+      panner.connect(bus);
+    } else {
+      bgVol.connect(bus);
+    }
 
-  const tone = offline.createBiquadFilter();
-  tone.type = "lowpass";
-  tone.frequency.value = params.distance === "far" ? 3400 : 9000;
+    if (params.bgSource === "recipe") {
+      buildSoundscape(offline, bgVol, {
+        meta: getSoundscape(params.soundscape),
+        mood: params.mood,
+        rhythm: params.rhythm,
+        startTime: 0,
+        duration,
+        baseGain: 1,
+        fadeOut: true,
+        duck: { start: VOICE_START, end: voiceRegionEnd, amount: DUCK },
+        pitchSemitones: params.bgPitch,
+      });
+    } else if (bgBuf) {
+      const src = offline.createBufferSource();
+      src.buffer = bgBuf;
+      src.loop = true;
+      src.playbackRate.value = Math.pow(2, params.bgPitch / 12);
+      const g = offline.createGain();
+      // fade in
+      g.gain.setValueAtTime(0.0001, 0);
+      g.gain.linearRampToValueAtTime(1, 2.5);
+      // duck under voice
+      g.gain.setValueAtTime(1, Math.max(2.5, VOICE_START - 0.3));
+      g.gain.linearRampToValueAtTime(DUCK, VOICE_START + 0.4);
+      g.gain.setValueAtTime(DUCK, voiceRegionEnd);
+      g.gain.linearRampToValueAtTime(1, voiceRegionEnd + 0.9);
+      // fade out
+      g.gain.setValueAtTime(1, Math.max(voiceRegionEnd + 1, duration - 3));
+      g.gain.linearRampToValueAtTime(0.0001, duration);
+      src.connect(g);
+      g.connect(bgVol);
+      src.start(0);
+      src.stop(duration);
+    }
+  }
 
-  const voiceGain = offline.createGain();
-  const vg = VOICE_GAIN[params.voiceLevel];
-  // fade in/out on the voice
-  voiceGain.gain.setValueAtTime(0.0001, VOICE_START);
-  voiceGain.gain.linearRampToValueAtTime(vg, VOICE_START + 0.35);
-  voiceGain.gain.setValueAtTime(vg, Math.max(VOICE_START + 0.5, voiceEnd - 1.2));
-  voiceGain.gain.linearRampToValueAtTime(0.0001, voiceEnd + 0.6);
+  // ---- 双耳节拍（中性声音设计，不宣称疗效） ----
+  if (params.binaural) {
+    const baseF = 110;
+    const beat = clamp(params.binauralHz, 2, 14);
+    for (const [f, pan] of [
+      [baseF, -1],
+      [baseF + beat, 1],
+    ] as const) {
+      const o = offline.createOscillator();
+      o.type = "sine";
+      o.frequency.value = f;
+      const g = offline.createGain();
+      g.gain.value = 0.04;
+      const p = offline.createStereoPanner();
+      p.pan.value = pan;
+      o.connect(g);
+      g.connect(p);
+      p.connect(bus);
+      o.start(0);
+      o.stop(duration);
+    }
+  }
 
-  src.connect(hp);
-  hp.connect(tone);
-  tone.connect(voiceGain);
-
-  // dry path
-  const dry = offline.createGain();
-  let wetAmt = REVERB_WET[params.distance];
-  if (params.voiceLevel === "surround") wetAmt = Math.min(0.7, wetAmt + 0.14);
-  // dry + wet 增益之和保持为 1，避免叠加后超过 1.0 触发不必要的限幅
-  dry.gain.value = 1 - wetAmt * 0.6;
-  voiceGain.connect(dry);
-  dry.connect(bus);
-
-  // wet path (reverb)
+  // ---- 音轨 2 · 人声（变速 + 循环 + 混响） ----
+  const wet = REVERB_WET[params.distance];
   const predelay = offline.createDelay();
   predelay.delayTime.value = params.distance === "far" ? 0.06 : 0.02;
   const convolver = offline.createConvolver();
-  convolver.buffer = createReverbIR(
-    offline,
-    params.voiceLevel === "surround" ? 3.2 : 2.4,
-    3.0
-  );
-  const wet = offline.createGain();
-  wet.gain.value = wetAmt * 0.6;
-  voiceGain.connect(predelay);
+  convolver.buffer = createReverbIR(offline, 2.6, 3.0);
+  const wetGain = offline.createGain();
+  wetGain.gain.value = wet;
   predelay.connect(convolver);
-  convolver.connect(wet);
-  wet.connect(bus);
+  convolver.connect(wetGain);
+  wetGain.connect(bus);
 
-  src.start(VOICE_START);
-  // 录音过长时把停止时间夹在离线上下文时长内，避免超出渲染区间
-  src.stop(Math.min(VOICE_START + voiceDur + 0.05, duration - 0.01));
+  const vol = clamp(params.voiceVolume, 0, 1.2);
+  for (let i = 0; i < loops; i++) {
+    const start = VOICE_START + i * (voicePlay + LOOP_GAP);
+    const end = start + voicePlay;
+
+    const src = offline.createBufferSource();
+    src.buffer = voiceBuf;
+    src.playbackRate.value = speed;
+
+    const hp = offline.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 95;
+    const tone = offline.createBiquadFilter();
+    tone.type = "lowpass";
+    tone.frequency.value = params.distance === "far" ? 3400 : 9000;
+
+    const vg = offline.createGain();
+    vg.gain.setValueAtTime(0.0001, start);
+    vg.gain.linearRampToValueAtTime(vol, start + 0.3);
+    vg.gain.setValueAtTime(vol, Math.max(start + 0.4, end - 0.5));
+    vg.gain.linearRampToValueAtTime(0.0001, end + 0.4);
+
+    src.connect(hp);
+    hp.connect(tone);
+    tone.connect(vg);
+
+    const dry = offline.createGain();
+    dry.gain.value = 1 - wet * 0.5;
+    vg.connect(dry);
+    dry.connect(bus);
+
+    vg.connect(predelay);
+
+    src.start(start);
+    src.stop(Math.min(end + 0.05, duration - 0.01));
+  }
 
   onProgress?.(0.35);
   const rendered = await offline.startRendering();

@@ -5,8 +5,10 @@ export type SoundscapeId = "confidence" | "calm" | "focus" | "reset" | "sleep";
 
 export type MoodKey = "gentle" | "ethereal" | "firm" | "bright";
 export type DistanceKey = "near" | "mid" | "far";
-export type VoiceLevelKey = "clear" | "soft" | "surround";
 export type RhythmKey = "none" | "light" | "strong";
+
+/** 背景音来源（STEP 4） */
+export type BgSource = "recipe" | "upload" | "qqmusic" | "none";
 
 /** 用户选择的使用场景 */
 export type SceneKey = "interview" | "exam" | "sleep" | "study" | "other";
@@ -34,13 +36,34 @@ export interface Affirmation {
   source: "deepseek" | "fallback";
 }
 
-/** 音轨混音参数 */
+/** 音轨混音参数（STEP 4 背景音 + STEP 5 调参台） */
 export interface MixParams {
+  // 背景音来源
+  bgSource: BgSource;
+  // 程序化定制配乐（bgSource==="recipe"）
   soundscape: SoundscapeId;
-  distance: DistanceKey;
-  voiceLevel: VoiceLevelKey;
-  rhythm: RhythmKey;
   mood: MoodKey;
+  rhythm: RhythmKey;
+  // 音轨 1 · 背景音
+  bgVolume: number; // 0..1
+  bgPitch: number; // 音调，半音 -12..+12
+  // 音轨 2 · 人声
+  voiceVolume: number; // 0..1
+  voiceSpeed: number; // 变速 1.0..10.0（playbackRate）
+  voiceLoops: number; // 人声循环次数 1..4
+  distance: DistanceKey; // 空间感（混响）
+  // 其他效果
+  binaural: boolean; // 双耳节拍
+  binauralHz: number; // 节拍频率 2..14
+  effect8d: boolean; // 8D 声像旋转
+}
+
+/** 上传 / QQ音乐 提供的背景音素材（二进制，单独于 MixParams 携带） */
+export interface BgAudio {
+  blob: Blob;
+  name: string;
+  url: string;
+  source: "upload" | "qqmusic";
 }
 
 /** 录音结果 */
@@ -83,5 +106,6 @@ export type WizardStep =
   | "input"
   | "affirmation"
   | "record"
-  | "soundscape"
+  | "background"
+  | "mixconsole"
   | "result";

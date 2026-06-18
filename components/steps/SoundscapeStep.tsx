@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  DISTANCE_LABELS,
+  BG_SOURCES,
   getSoundscape,
   MOOD_LABELS,
+  QQ_DEMO_TRACKS,
   RHYTHM_LABELS,
   SOUNDSCAPES,
-  VOICE_LEVEL_LABELS,
 } from "@/lib/constants";
 import { startPreview, stopPreview } from "@/lib/audio/soundscapes";
 import type {
-  DistanceKey,
+  BgAudio,
+  BgSource,
   MixParams,
   MoodKey,
   RhythmKey,
   SoundscapeId,
-  VoiceLevelKey,
 } from "@/lib/types";
 
 function Segmented<T extends string>({
@@ -52,25 +52,29 @@ function Segmented<T extends string>({
   );
 }
 
-export default function SoundscapeStep({
+export default function BackgroundStep({
   params,
   onParamsChange,
-  onGenerate,
+  bgAudio,
+  onBgAudioChange,
+  onNext,
   onBack,
-  generating,
 }: {
   params: MixParams;
   onParamsChange: (p: MixParams) => void;
-  onGenerate: () => void;
+  bgAudio: BgAudio | null;
+  onBgAudioChange: (a: BgAudio | null) => void;
+  onNext: () => void;
   onBack: () => void;
-  generating: boolean;
 }) {
   const [previewOn, setPreviewOn] = useState(false);
   const [previewError, setPreviewError] = useState("");
+  const [qqPick, setQqPick] = useState<number | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const recipe = getSoundscape(params.soundscape);
 
   useEffect(() => {
-    if (previewOn) {
+    if (previewOn && params.bgSource === "recipe") {
       setPreviewError("");
       startPreview(params.soundscape, params.mood, params.rhythm).catch(() => {
         setPreviewError("试听启动失败，请检查浏览器的声音/自动播放权限后重试。");
@@ -80,121 +84,225 @@ export default function SoundscapeStep({
       stopPreview();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOn, params.soundscape, params.mood, params.rhythm]);
+  }, [previewOn, params.bgSource, params.soundscape, params.mood, params.rhythm]);
 
   useEffect(() => () => stopPreview(), []);
 
   const set = (patch: Partial<MixParams>) => onParamsChange({ ...params, ...patch });
 
-  const handleGenerate = () => {
+  const chooseSource = (s: BgSource) => {
     stopPreview();
     setPreviewOn(false);
-    onGenerate();
+    set({ bgSource: s });
   };
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (bgAudio?.url) URL.revokeObjectURL(bgAudio.url);
+    onBgAudioChange({
+      blob: f,
+      name: f.name,
+      url: URL.createObjectURL(f),
+      source: "upload",
+    });
+  };
+
+  const nextDisabled = params.bgSource === "upload" && !bgAudio;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold sm:text-3xl">选一个声景配方</h2>
-          <p className="mt-2 text-sm text-[var(--color-mist-soft)]">
-            Sound Recipe · 由程序实时合成、零版权风险，结合节奏、音量、声像与环境音设计。
-          </p>
-        </div>
-        <button
-          onClick={() => setPreviewOn((v) => !v)}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm transition-all ${
-            previewOn
-              ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/50"
-              : "btn-ghost"
-          }`}
-        >
-          {previewOn ? "■ 停止试听" : "▶ 试听"}
-        </button>
+      <div>
+        <h2 className="text-2xl font-bold sm:text-3xl">为你的声音选一段背景音</h2>
+        <p className="mt-2 text-sm text-[var(--color-mist-soft)]">
+          可以用 AI 实时配乐，也可以上传你自己的音乐；下一步再细调每条音轨的参数。
+        </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {SOUNDSCAPES.map((s) => {
-          const active = params.soundscape === s.id;
+      {/* 背景音来源 */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {BG_SOURCES.map((s) => {
+          const active = params.bgSource === s.key;
           return (
             <button
-              key={s.id}
-              onClick={() => set({ soundscape: s.id as SoundscapeId })}
-              className={`relative overflow-hidden rounded-2xl p-4 text-left transition-all ${
-                active ? "ring-2 ring-[var(--color-aura)]" : "ring-1 ring-white/8"
+              key={s.key}
+              onClick={() => chooseSource(s.key)}
+              className={`rounded-2xl p-3.5 text-left transition-all ${
+                active
+                  ? "bg-[var(--color-aura)]/20 ring-2 ring-[var(--color-aura)]"
+                  : "bg-white/5 ring-1 ring-white/8 hover:bg-white/10"
               }`}
-              style={{
-                background: `linear-gradient(150deg, ${s.palette[0]}, ${s.palette[1]} 60%, ${s.palette[2]})`,
-              }}
             >
-              <div
-                className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40 blur-xl"
-                style={{ background: s.accent }}
-              />
-              <p className="relative text-base font-semibold text-white">
-                {s.name}
-                <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wider text-white/70">
-                  {s.en}
-                </span>
+              <div className="text-lg">{s.emoji}</div>
+              <p className="mt-1 text-sm font-semibold text-[var(--color-mist)]">
+                {s.label}
               </p>
-              <p className="relative mt-1 text-[11px] text-white/75">{s.scene}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-[var(--color-haze)]">
+                {s.hint}
+              </p>
             </button>
           );
         })}
       </div>
 
-      {/* 当前配方的音乐设计：让技术可见 */}
-      <div className="mt-3 rounded-xl bg-white/4 px-4 py-2.5 text-xs text-[var(--color-mist-soft)]">
-        <span className="text-[var(--color-aura)]">{recipe.name} · {recipe.en}</span>
-        <span className="mx-2 text-[var(--color-haze)]">音乐设计：</span>
-        {recipe.design}
-      </div>
-
-      {previewError && (
-        <p className="mt-2 text-xs text-amber-300">{previewError}</p>
+      {/* ---- recipe ---- */}
+      {params.bgSource === "recipe" && (
+        <div className="mt-5">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm text-[var(--color-mist-soft)]">选一个配方，再调音乐设计</p>
+            <button
+              onClick={() => setPreviewOn((v) => !v)}
+              className={`rounded-full px-4 py-1.5 text-sm transition-all ${
+                previewOn
+                  ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/50"
+                  : "btn-ghost"
+              }`}
+            >
+              {previewOn ? "■ 停止试听" : "▶ 试听"}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {SOUNDSCAPES.map((s) => {
+              const active = params.soundscape === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => set({ soundscape: s.id as SoundscapeId })}
+                  className={`relative overflow-hidden rounded-2xl p-4 text-left transition-all ${
+                    active ? "ring-2 ring-[var(--color-aura)]" : "ring-1 ring-white/8"
+                  }`}
+                  style={{
+                    background: `linear-gradient(150deg, ${s.palette[0]}, ${s.palette[1]} 60%, ${s.palette[2]})`,
+                  }}
+                >
+                  <div
+                    className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40 blur-xl"
+                    style={{ background: s.accent }}
+                  />
+                  <p className="relative text-base font-semibold text-white">
+                    {s.name}
+                    <span className="ml-1.5 text-[10px] font-normal uppercase tracking-wider text-white/70">
+                      {s.en}
+                    </span>
+                  </p>
+                  <p className="relative mt-1 text-[11px] text-white/75">{s.scene}</p>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 rounded-xl bg-white/4 px-4 py-2.5 text-xs text-[var(--color-mist-soft)]">
+            <span className="text-[var(--color-aura)]">{recipe.name} · {recipe.en}</span>
+            <span className="mx-2 text-[var(--color-haze)]">音乐设计：</span>
+            {recipe.design}
+          </div>
+          {previewError && <p className="mt-2 text-xs text-amber-300">{previewError}</p>}
+          <div className="glass mt-3 grid grid-cols-1 gap-5 rounded-2xl p-5 sm:grid-cols-2">
+            <Segmented
+              label="氛围"
+              value={params.mood}
+              options={MOOD_LABELS}
+              onChange={(v: MoodKey) => set({ mood: v })}
+            />
+            <Segmented
+              label="节奏感"
+              value={params.rhythm}
+              options={RHYTHM_LABELS}
+              onChange={(v: RhythmKey) => set({ rhythm: v })}
+            />
+          </div>
+        </div>
       )}
 
-      <div className="glass mt-4 grid grid-cols-1 gap-5 rounded-2xl p-5 sm:grid-cols-2">
-        <Segmented
-          label="氛围"
-          value={params.mood}
-          options={MOOD_LABELS}
-          onChange={(v: MoodKey) => set({ mood: v })}
-        />
-        <Segmented
-          label="人声强度"
-          value={params.voiceLevel}
-          options={VOICE_LEVEL_LABELS}
-          onChange={(v: VoiceLevelKey) => set({ voiceLevel: v })}
-        />
-        <Segmented
-          label="声音距离"
-          value={params.distance}
-          options={DISTANCE_LABELS}
-          onChange={(v: DistanceKey) => set({ distance: v })}
-        />
-        <Segmented
-          label="节奏感"
-          value={params.rhythm}
-          options={RHYTHM_LABELS}
-          onChange={(v: RhythmKey) => set({ rhythm: v })}
-        />
-      </div>
+      {/* ---- upload ---- */}
+      {params.bgSource === "upload" && (
+        <div className="glass mt-5 rounded-2xl p-6 text-center">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="audio/*"
+            onChange={onFile}
+            className="hidden"
+          />
+          {bgAudio ? (
+            <div>
+              <p className="text-sm text-[var(--color-mist)]">已选择：{bgAudio.name}</p>
+              <audio src={bgAudio.url} controls className="mx-auto mt-3 w-full max-w-md" />
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="btn-ghost mt-3 rounded-full px-4 py-2 text-sm"
+              >
+                换一个文件
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="btn-primary rounded-full px-6 py-3 text-sm"
+            >
+              选择本地音频文件
+            </button>
+          )}
+          <p className="mt-3 text-[11px] text-[var(--color-haze)]">
+            请确认你拥有该音频的使用权；仅在本设备本地用于生成本次音轨。
+          </p>
+        </div>
+      )}
+
+      {/* ---- qqmusic shell ---- */}
+      {params.bgSource === "qqmusic" && (
+        <div className="glass mt-5 rounded-2xl p-5">
+          <input
+            disabled
+            placeholder="搜索 QQ 音乐曲库（演示占位）"
+            className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-sm text-[var(--color-mist-soft)] outline-none placeholder:text-[var(--color-haze)]"
+          />
+          <div className="mt-3 space-y-1.5">
+            {QQ_DEMO_TRACKS.map((t, i) => (
+              <button
+                key={t.title}
+                onClick={() => setQqPick(i)}
+                className={`flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left transition-all ${
+                  qqPick === i ? "bg-[var(--color-aura)]/20 ring-1 ring-[var(--color-aura)]/50" : "bg-white/4 hover:bg-white/8"
+                }`}
+              >
+                <span className="text-sm text-[var(--color-mist)]">
+                  {t.title} <span className="text-[var(--color-haze)]">· {t.artist}</span>
+                </span>
+                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-[var(--color-mist-soft)]">
+                  {t.tag}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] text-amber-300/80">
+            QQ 音乐授权曲库为演示占位，正式版将打通版权混音；本次 demo 将以纯人声合成。
+          </p>
+        </div>
+      )}
+
+      {/* ---- none ---- */}
+      {params.bgSource === "none" && (
+        <div className="glass mt-5 rounded-2xl p-6 text-center text-sm text-[var(--color-mist-soft)]">
+          只保留你的声音，不添加任何背景音。下一步可调人声的音量、变速与空间感。
+        </div>
+      )}
 
       <div className="mt-7 flex items-center justify-between">
         <button
           onClick={onBack}
-          disabled={generating}
-          className="text-sm text-[var(--color-haze)] hover:text-[var(--color-mist)] disabled:opacity-40"
+          className="text-sm text-[var(--color-haze)] hover:text-[var(--color-mist)]"
         >
           ← 返回重录
         </button>
         <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="btn-primary rounded-full px-8 py-3.5 text-base"
+          onClick={() => {
+            stopPreview();
+            onNext();
+          }}
+          disabled={nextDisabled}
+          className="btn-primary rounded-full px-8 py-3.5 text-base disabled:opacity-50"
         >
-          {generating ? "生成中…" : "生成我的心声调频 ✨"}
+          下一步：调参 →
         </button>
       </div>
     </div>

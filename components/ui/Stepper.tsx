@@ -6,7 +6,8 @@ const STEPS: { key: WizardStep; label: string }[] = [
   { key: "input", label: "写下烦恼" },
   { key: "affirmation", label: "肯定语" },
   { key: "record", label: "录声音" },
-  { key: "soundscape", label: "音景" },
+  { key: "background", label: "背景音" },
+  { key: "mixconsole", label: "调参" },
   { key: "result", label: "音轨" },
 ];
 
