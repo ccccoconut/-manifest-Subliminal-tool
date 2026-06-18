@@ -122,7 +122,6 @@ export default function Studio() {
     setHistory(loadHistory());
   }, []);
 
-
   const runGenerate = useCallback(
     async (userInput: UserInput, tone: ToneKey, advance: boolean) => {
       setGenAff(true);
@@ -377,12 +376,13 @@ export default function Studio() {
                 onBack={() => setStep("record")}
               />
             )}
-            {step === "mixconsole" && params && (
+            {step === "mixconsole" && params && voiceTake && (
               <MixConsoleStep
                 params={params}
                 onParamsChange={setParams}
+                voiceBlob={voiceTake.blob}
                 bgAudio={bgAudio}
-                onGenerate={() => voiceTake && handleGenerateTrack(voiceTake)}
+                onGenerate={() => handleGenerateTrack(voiceTake)}
                 onBack={() => setStep("background")}
                 generating={genMix}
               />

@@ -37,6 +37,8 @@ export interface RenderInput {
   params: MixParams;
   bgBlob?: Blob | null; // 上传/QQ音乐 的背景音
   onProgress?: (p: number) => void;
+  /** 短预览模式：把时长压到 N 秒、人声只播一遍、提前入声（用于「全曲试听」） */
+  previewSeconds?: number;
 }
 
 /** 离线渲染：背景音（音轨1）+ 人声（音轨2）+ 双耳节拍/8D，含 ducking、混响、淡入淡出、归一化。 */
@@ -45,6 +47,7 @@ export async function renderMix({
   params,
   bgBlob,
   onProgress,
+  previewSeconds,
 }: RenderInput): Promise<MixResult> {
   onProgress?.(0.05);
   const voiceBuf = await decodeAudio(voiceBlob);
@@ -59,16 +62,22 @@ export async function renderMix({
   }
   onProgress?.(0.2);
 
+  const isPreview = !!previewSeconds;
+  const vStart = isPreview ? 1.2 : VOICE_START;
   const speed = clamp(params.voiceSpeed, 0.5, 10);
-  const loops = clamp(Math.round(params.voiceLoops), 1, 4);
   const voicePlay = voiceBuf.duration / speed;
-  const totalVoice = voicePlay * loops + LOOP_GAP * (loops - 1);
-  const duration = clamp(
-    VOICE_START + totalVoice + 3.6,
-    MIN_DURATION,
-    MAX_DURATION
+  const requestedLoops = isPreview ? 1 : clamp(Math.round(params.voiceLoops), 1, 4);
+  // 只排能在 MAX_DURATION 内完整播放的循环，避免后面的循环越界变静音
+  const maxLoops = Math.max(
+    1,
+    Math.floor((MAX_DURATION - vStart - 3.6 + LOOP_GAP) / (voicePlay + LOOP_GAP))
   );
-  const voiceRegionEnd = Math.min(VOICE_START + totalVoice, duration - 1.0);
+  const loops = Math.min(requestedLoops, maxLoops);
+  const totalVoice = voicePlay * loops + LOOP_GAP * (loops - 1);
+  const duration = isPreview
+    ? Math.max(4, previewSeconds as number)
+    : clamp(VOICE_START + totalVoice + 3.6, MIN_DURATION, MAX_DURATION);
+  const voiceRegionEnd = Math.min(vStart + totalVoice, duration - 1.0);
 
   const offline = new OfflineAudioContext(2, Math.ceil(duration * SR), SR);
 
@@ -118,7 +127,7 @@ export async function renderMix({
         duration,
         baseGain: 1,
         fadeOut: true,
-        duck: { start: VOICE_START, end: voiceRegionEnd, amount: DUCK },
+        duck: { start: vStart, end: voiceRegionEnd, amount: DUCK },
         pitchSemitones: params.bgPitch,
       });
     } else if (bgBuf) {
@@ -127,17 +136,18 @@ export async function renderMix({
       src.loop = true;
       src.playbackRate.value = Math.pow(2, params.bgPitch / 12);
       const g = offline.createGain();
-      // fade in
+      // 所有自动化事件时间必须严格递增；预览模式 vStart 较早，淡入需在入声前完成
+      const bgFadeIn = Math.min(2.5, Math.max(0.4, vStart - 0.4));
+      const duckStart = Math.max(bgFadeIn + 0.05, vStart - 0.3);
+      const duckEnd = Math.max(duckStart + 0.4, voiceRegionEnd);
       g.gain.setValueAtTime(0.0001, 0);
-      g.gain.linearRampToValueAtTime(1, 2.5);
-      // duck under voice
-      g.gain.setValueAtTime(1, Math.max(2.5, VOICE_START - 0.3));
-      g.gain.linearRampToValueAtTime(DUCK, VOICE_START + 0.4);
-      g.gain.setValueAtTime(DUCK, voiceRegionEnd);
-      g.gain.linearRampToValueAtTime(1, voiceRegionEnd + 0.9);
-      // fade out
-      g.gain.setValueAtTime(1, Math.max(voiceRegionEnd + 1, duration - 3));
-      g.gain.linearRampToValueAtTime(0.0001, duration);
+      g.gain.linearRampToValueAtTime(1, bgFadeIn); // 淡入
+      g.gain.setValueAtTime(1, duckStart);
+      g.gain.linearRampToValueAtTime(DUCK, duckStart + 0.4); // duck 下压
+      g.gain.setValueAtTime(DUCK, duckEnd);
+      g.gain.linearRampToValueAtTime(1, duckEnd + 0.9); // 回升
+      g.gain.setValueAtTime(1, Math.max(duckEnd + 1, duration - 3));
+      g.gain.linearRampToValueAtTime(0.0001, duration); // 淡出
       src.connect(g);
       g.connect(bgVol);
       src.start(0);
@@ -182,7 +192,7 @@ export async function renderMix({
 
   const vol = clamp(params.voiceVolume, 0, 1.2);
   for (let i = 0; i < loops; i++) {
-    const start = VOICE_START + i * (voicePlay + LOOP_GAP);
+    const start = vStart + i * (voicePlay + LOOP_GAP);
     const end = start + voicePlay;
 
     const src = offline.createBufferSource();

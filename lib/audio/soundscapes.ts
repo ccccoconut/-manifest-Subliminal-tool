@@ -65,7 +65,8 @@ export function buildSoundscape(
   g.linearRampToValueAtTime(baseGain, t0 + fadeIn);
   if (opts.duck && opts.duck.start > t0 + fadeIn) {
     const d = opts.duck;
-    g.setValueAtTime(baseGain, d.start - 0.3);
+    // duck 锚点不得早于淡入结束，否则会截断淡入造成爆音
+    g.setValueAtTime(baseGain, Math.max(t0 + fadeIn, d.start - 0.3));
     g.linearRampToValueAtTime(baseGain * d.amount, d.start + 0.4);
     g.setValueAtTime(baseGain * d.amount, Math.max(d.start + 0.5, d.end));
     g.linearRampToValueAtTime(baseGain, d.end + 0.9);

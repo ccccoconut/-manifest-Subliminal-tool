@@ -89,7 +89,8 @@ export default function RecordStep({
   };
 
   const reRecord = () => {
-    if (take) URL.revokeObjectURL(take.url);
+    // 不在此处 revoke：take 可能已交给 Studio（共享同一对象），revoke 会让其 audio src 失效。
+    // 该录音的 blobURL 由 Studio 的 restart() 统一释放。
     setTake(null);
     setStatus("idle");
     setElapsed(0);

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DISTANCE_HINT } from "@/lib/constants";
-import { startPreview, stopPreview } from "@/lib/audio/soundscapes";
+import { renderMix } from "@/lib/audio/mixer";
 import type { BgAudio, DistanceKey, MixParams } from "@/lib/types";
 
 function Slider({
@@ -73,9 +73,12 @@ function Toggle({
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const semi = (v: number) => `${v > 0 ? "+" : ""}${v} 半音`;
 
+type Preview = "idle" | "rendering" | "playing";
+
 export default function MixConsoleStep({
   params,
   onParamsChange,
+  voiceBlob,
   bgAudio,
   onGenerate,
   onBack,
@@ -83,66 +86,121 @@ export default function MixConsoleStep({
 }: {
   params: MixParams;
   onParamsChange: (p: MixParams) => void;
+  voiceBlob: Blob;
   bgAudio: BgAudio | null;
   onGenerate: () => void;
   onBack: () => void;
   generating: boolean;
 }) {
-  const [previewOn, setPreviewOn] = useState(false);
+  const [preview, setPreview] = useState<Preview>("idle");
+  const ctxRef = useRef<AudioContext | null>(null);
+  const srcRef = useRef<AudioBufferSourceNode | null>(null);
+  const genRef = useRef(0); // 自增令牌：作废在途的离线渲染
+  const mountedRef = useRef(true);
   const set = (patch: Partial<MixParams>) => onParamsChange({ ...params, ...patch });
 
-  const hasBgTrack =
-    params.bgSource === "recipe" || (params.bgSource === "upload" && !!bgAudio);
-  const canPreviewBg = params.bgSource === "recipe";
+  const stopPreview = () => {
+    genRef.current++;
+    try {
+      srcRef.current?.stop();
+    } catch {
+      /* already stopped */
+    }
+    srcRef.current = null;
+    ctxRef.current?.close().catch(() => {});
+    ctxRef.current = null;
+    if (mountedRef.current) setPreview("idle");
+  };
 
   useEffect(() => {
-    if (previewOn && canPreviewBg) {
-      startPreview(params.soundscape, params.mood, params.rhythm, params.bgPitch).catch(
-        () => setPreviewOn(false)
-      );
-    } else {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
       stopPreview();
-    }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewOn, canPreviewBg, params.soundscape, params.mood, params.rhythm, params.bgPitch]);
+  }, []);
 
-  useEffect(() => () => stopPreview(), []);
+  const fullPreview = async () => {
+    if (preview === "playing" || preview === "rendering") {
+      stopPreview();
+      return;
+    }
+    const myGen = ++genRef.current;
+    setPreview("rendering");
+    let buffer: AudioBuffer;
+    try {
+      ({ buffer } = await renderMix({
+        voiceBlob,
+        params,
+        bgBlob: bgAudio?.blob ?? null,
+        previewSeconds: 8,
+      }));
+    } catch {
+      if (mountedRef.current && genRef.current === myGen) setPreview("idle");
+      return;
+    }
+    // 渲染期间被取消（再次点击/卸载/点了生成）→ 丢弃结果，不创建 AudioContext
+    if (!mountedRef.current || genRef.current !== myGen) return;
+    const ctx = new AudioContext();
+    if (ctx.state === "suspended") await ctx.resume();
+    if (!mountedRef.current || genRef.current !== myGen) {
+      ctx.close().catch(() => {});
+      return;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.onended = () => {
+      if (srcRef.current === src) stopPreview();
+    };
+    ctxRef.current = ctx;
+    srcRef.current = src;
+    src.start();
+    setPreview("playing");
+  };
 
   const handleGenerate = () => {
     stopPreview();
-    setPreviewOn(false);
     onGenerate();
   };
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <div>
-        <h2 className="text-2xl font-bold sm:text-3xl">调参 · 混音台</h2>
-        <p className="mt-2 text-sm text-[var(--color-mist-soft)]">
-          像调音师一样微调两条音轨。所有参数仅为声音设计，不宣称任何疗效。
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold sm:text-3xl">调参 · 混音台</h2>
+          <p className="mt-2 text-sm text-[var(--color-mist-soft)]">
+            像调音师一样微调两条音轨。所有参数仅为声音设计，不宣称任何疗效。
+          </p>
+        </div>
+        <button
+          onClick={fullPreview}
+          disabled={generating}
+          className={`shrink-0 rounded-full px-4 py-2 text-sm transition-all disabled:opacity-50 ${
+            preview === "playing"
+              ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/50"
+              : "btn-ghost"
+          }`}
+        >
+          {preview === "rendering"
+            ? "合成预览中…"
+            : preview === "playing"
+              ? "■ 停止试听"
+              : "▶ 全曲试听"}
+        </button>
       </div>
+      <p className="mt-1.5 text-[11px] text-[var(--color-haze)]">
+        「全曲试听」会用当前参数快速合成约 8 秒，含你的声音 + 背景音 + 效果。
+      </p>
 
       {/* 音轨 1 · 背景音 */}
-      <div className="glass mt-5 rounded-2xl p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-semibold text-[var(--color-mist)]">
-            音轨 1 · 背景音
-          </p>
-          {canPreviewBg && (
-            <button
-              onClick={() => setPreviewOn((v) => !v)}
-              className={`rounded-full px-3 py-1 text-xs transition-all ${
-                previewOn
-                  ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/50"
-                  : "btn-ghost"
-              }`}
-            >
-              {previewOn ? "■ 停止" : "▶ 试听"}
-            </button>
-          )}
-        </div>
-        {hasBgTrack ? (
+      <div className="glass mt-4 rounded-2xl p-5">
+        <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">
+          音轨 1 · 背景音
+        </p>
+        {params.bgSource === "recipe" ||
+        (params.bgSource === "upload" && bgAudio) ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Slider
               label="音量"
