@@ -42,7 +42,7 @@ function Segmented<T extends string>({
             className={`flex-1 rounded-xl px-2 py-2 text-sm transition-all ${
               value === k
                 ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-                : "bg-white/5 text-[var(--color-mist-soft)] hover:bg-white/10"
+                : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
             }`}
           >
             {v}
@@ -131,7 +131,7 @@ export default function BackgroundStep({
               className={`rounded-2xl p-3.5 text-left transition-all ${
                 active
                   ? "bg-[var(--color-aura)]/20 ring-2 ring-[var(--color-aura)]"
-                  : "bg-white/5 ring-1 ring-white/8 hover:bg-white/10"
+                  : "bg-black/[0.05] ring-1 ring-black/[0.06] hover:bg-black/[0.07]"
               }`}
             >
               <BgIcon source={s.key} className="h-5 w-5 text-[var(--color-mist)]" />
@@ -170,7 +170,7 @@ export default function BackgroundStep({
                   key={s.id}
                   onClick={() => set({ soundscape: s.id as SoundscapeId })}
                   className={`relative overflow-hidden rounded-2xl p-4 text-left transition-all ${
-                    active ? "ring-2 ring-[var(--color-aura)]" : "ring-1 ring-white/8"
+                    active ? "ring-2 ring-[var(--color-aura)]" : "ring-1 ring-black/[0.06]"
                   }`}
                   style={{
                     background: `linear-gradient(150deg, ${s.palette[0]}, ${s.palette[1]} 60%, ${s.palette[2]})`,
@@ -191,12 +191,12 @@ export default function BackgroundStep({
               );
             })}
           </div>
-          <div className="mt-3 rounded-xl bg-white/4 px-4 py-2.5 text-xs text-[var(--color-mist-soft)]">
+          <div className="mt-3 rounded-xl bg-black/[0.04] px-4 py-2.5 text-xs text-[var(--color-mist-soft)]">
             <span className="text-[var(--color-aura)]">{recipe.name} · {recipe.en}</span>
             <span className="mx-2 text-[var(--color-haze)]">音乐设计：</span>
             {recipe.design}
           </div>
-          {previewError && <p className="mt-2 text-xs text-amber-300">{previewError}</p>}
+          {previewError && <p className="mt-2 text-xs text-amber-600">{previewError}</p>}
           <div className="glass mt-3 grid grid-cols-1 gap-5 rounded-2xl p-5 sm:grid-cols-2">
             <Segmented
               label="氛围"
@@ -255,7 +255,7 @@ export default function BackgroundStep({
           <input
             disabled
             placeholder="搜索 QQ 音乐曲库（演示占位）"
-            className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-sm text-[var(--color-mist-soft)] outline-none placeholder:text-[var(--color-haze)]"
+            className="w-full rounded-xl bg-black/[0.05] px-4 py-2.5 text-sm text-[var(--color-mist-soft)] outline-none placeholder:text-[var(--color-haze)]"
           />
           <div className="mt-3 space-y-1.5">
             {QQ_DEMO_TRACKS.map((t, i) => (
@@ -263,19 +263,19 @@ export default function BackgroundStep({
                 key={t.title}
                 onClick={() => setQqPick(i)}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left transition-all ${
-                  qqPick === i ? "bg-[var(--color-aura)]/20 ring-1 ring-[var(--color-aura)]/50" : "bg-white/4 hover:bg-white/8"
+                  qqPick === i ? "bg-[var(--color-aura)]/20 ring-1 ring-[var(--color-aura)]/50" : "bg-black/[0.04] hover:bg-black/[0.06]"
                 }`}
               >
                 <span className="text-sm text-[var(--color-mist)]">
                   {t.title} <span className="text-[var(--color-haze)]">· {t.artist}</span>
                 </span>
-                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-[var(--color-mist-soft)]">
+                <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[10px] text-[var(--color-mist-soft)]">
                   {t.tag}
                 </span>
               </button>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-amber-300/80">
+          <p className="mt-3 text-[11px] text-amber-600/80">
             QQ 音乐授权曲库为演示占位，正式版将打通版权混音；本次 demo 将以纯人声合成。
           </p>
         </div>

@@ -29,8 +29,8 @@ export default function EmotionRating({
                   onClick={() => onChange({ ...value, [dim.key]: n })}
                   className={`h-10 flex-1 rounded-xl text-sm font-medium transition-all ${
                     v === n
-                      ? "bg-[var(--color-aura)] text-[#0a0a14] shadow-[0_0_16px_rgba(167,139,250,0.5)]"
-                      : "bg-white/6 text-[var(--color-mist-soft)] hover:bg-white/12"
+                      ? "bg-[var(--color-aura)] text-white shadow-[0_0_16px_rgba(167,139,250,0.5)]"
+                      : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.08]"
                   }`}
                 >
                   {n}

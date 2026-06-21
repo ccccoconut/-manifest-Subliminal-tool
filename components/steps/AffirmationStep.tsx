@@ -35,7 +35,7 @@ export default function AffirmationStep({
               适合场景 · {affirmation.scene}
             </p>
           </div>
-          <span className="shrink-0 rounded-full bg-white/5 px-2.5 py-1 text-[10px] text-[var(--color-haze)]">
+          <span className="shrink-0 rounded-full bg-black/[0.05] px-2.5 py-1 text-[10px] text-[var(--color-haze)]">
             {affirmation.source === "deepseek" ? "AI 生成" : "本地生成"}
           </span>
         </div>
@@ -54,7 +54,7 @@ export default function AffirmationStep({
               {affirmation.strategy.map((s) => (
                 <span
                   key={s}
-                  className="rounded-full bg-white/8 px-2 py-0.5 text-[11px] text-[var(--color-mist)]"
+                  className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11px] text-[var(--color-mist)]"
                 >
                   {s}
                 </span>
@@ -67,7 +67,7 @@ export default function AffirmationStep({
           {affirmation.emotionTags.map((t) => (
             <span
               key={t}
-              className="rounded-full bg-white/6 px-3 py-1 text-xs text-[var(--color-mist-soft)]"
+              className="rounded-full bg-black/[0.05] px-3 py-1 text-xs text-[var(--color-mist-soft)]"
             >
               {t}
             </span>
@@ -81,7 +81,7 @@ export default function AffirmationStep({
             <input
               value={affirmation.anchorLine}
               onChange={(e) => onAnchorChange(e.target.value)}
-              className="mt-1.5 w-full rounded-lg bg-white/10 px-3 py-2 text-lg font-medium text-[var(--color-mist)] outline-none"
+              className="mt-1.5 w-full rounded-lg bg-black/[0.07] px-3 py-2 text-lg font-medium text-[var(--color-mist)] outline-none"
             />
           ) : (
             <p className="mt-1.5 text-lg font-semibold leading-relaxed text-[var(--color-mist)]">
@@ -111,7 +111,7 @@ export default function AffirmationStep({
                     next[i] = e.target.value;
                     onLinesChange(next);
                   }}
-                  className="flex-1 rounded-lg bg-white/5 px-3 py-1.5 text-base text-[var(--color-mist)] outline-none focus:bg-white/10"
+                  className="flex-1 rounded-lg bg-black/[0.05] px-3 py-1.5 text-base text-[var(--color-mist)] outline-none focus:bg-black/[0.07]"
                 />
               ) : (
                 <p className="flex-1 text-base leading-relaxed text-[var(--color-mist)]">
@@ -122,7 +122,7 @@ export default function AffirmationStep({
           ))}
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/8 pt-5">
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-black/[0.06] pt-5">
           <button
             onClick={() => onRegenerate("default")}
             disabled={regenerating}

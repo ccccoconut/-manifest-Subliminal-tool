@@ -46,8 +46,8 @@ export default function GenerationOverlay({ progress }: { progress: number }) {
                     done
                       ? "bg-[var(--color-aura-deep)]/60 text-[var(--color-mist)]"
                       : active
-                        ? "bg-[var(--color-aura)] text-[#0a0a14] shadow-[0_0_16px_rgba(167,139,250,0.6)]"
-                        : "bg-white/6 text-[var(--color-haze)]"
+                        ? "bg-[var(--color-aura)] text-white shadow-[0_0_16px_rgba(167,139,250,0.6)]"
+                        : "bg-black/[0.05] text-[var(--color-haze)]"
                   }`}
                 >
                   {done ? "✓" : i + 1}
@@ -74,7 +74,7 @@ export default function GenerationOverlay({ progress }: { progress: number }) {
           })}
         </div>
 
-        <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-black/[0.07]">
           <div
             className="h-full rounded-full bg-gradient-to-r from-[var(--color-aura-deep)] to-[var(--color-glow)] transition-all duration-300"
             style={{ width: `${Math.round(progress * 100)}%` }}

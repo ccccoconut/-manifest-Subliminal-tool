@@ -74,7 +74,7 @@ export default function ResultStep({
             {track.emotionTags.map((t) => (
               <span
                 key={t}
-                className="rounded-full bg-white/8 px-2.5 py-1 text-xs text-[var(--color-mist-soft)]"
+                className="rounded-full bg-black/[0.06] px-2.5 py-1 text-xs text-[var(--color-mist-soft)]"
               >
                 {t}
               </span>
@@ -83,7 +83,7 @@ export default function ResultStep({
 
           {/* phase: before listening */}
           {phase === "before" && (
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/4 p-4">
+            <div className="mt-5 rounded-2xl border border-black/[0.07] bg-black/[0.04] p-4">
               <p className="text-sm font-medium text-[var(--color-mist)]">
                 聆听前，先记录此刻的你
               </p>
@@ -151,7 +151,7 @@ export default function ResultStep({
               return (
                 <div
                   key={dim.key}
-                  className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3"
+                  className="flex items-center justify-between rounded-xl bg-black/[0.05] px-4 py-3"
                 >
                   <span className="text-sm text-[var(--color-mist-soft)]">
                     {dim.label}
@@ -163,8 +163,8 @@ export default function ResultStep({
                         diff === 0
                           ? "text-[var(--color-haze)]"
                           : good
-                            ? "text-emerald-300"
-                            : "text-amber-300"
+                            ? "text-emerald-600"
+                            : "text-amber-600"
                       }
                     >
                       {arrow}

@@ -59,11 +59,11 @@ function Toggle({
       className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-sm transition-all ${
         on
           ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-          : "bg-white/5 text-[var(--color-mist-soft)] hover:bg-white/10"
+          : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
       }`}
     >
       <span
-        className={`h-2 w-2 rounded-full ${on ? "bg-[var(--color-aura)]" : "bg-white/25"}`}
+        className={`h-2 w-2 rounded-full ${on ? "bg-[var(--color-aura)]" : "bg-black/20"}`}
       />
       {label}
     </button>
@@ -265,7 +265,7 @@ export default function MixConsoleStep({
                 className={`flex-1 rounded-xl py-2 text-sm transition-all ${
                   params.voiceLoops === n
                     ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-                    : "bg-white/5 text-[var(--color-mist-soft)] hover:bg-white/10"
+                    : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
                 }`}
               >
                 {n} 次
@@ -283,7 +283,7 @@ export default function MixConsoleStep({
                 className={`flex-1 rounded-xl py-2 text-xs transition-all ${
                   params.distance === d
                     ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-                    : "bg-white/5 text-[var(--color-mist-soft)] hover:bg-white/10"
+                    : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
                 }`}
               >
                 {DISTANCE_HINT[d]}

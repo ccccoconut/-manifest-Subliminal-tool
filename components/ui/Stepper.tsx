@@ -24,10 +24,10 @@ export default function Stepper({ current }: { current: WizardStep }) {
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold transition-all ${
                   active
-                    ? "bg-[var(--color-aura)] text-[#0a0a14] shadow-[0_0_18px_rgba(167,139,250,0.6)]"
+                    ? "bg-[var(--color-aura)] text-white shadow-[0_0_18px_rgba(167,139,250,0.6)]"
                     : done
                       ? "bg-[var(--color-aura-deep)]/40 text-[var(--color-mist)]"
-                      : "bg-white/5 text-[var(--color-haze)]"
+                      : "bg-black/[0.05] text-[var(--color-haze)]"
                 }`}
               >
                 {done ? "✓" : i + 1}
@@ -43,7 +43,7 @@ export default function Stepper({ current }: { current: WizardStep }) {
             {i < STEPS.length - 1 && (
               <span
                 className={`h-px w-4 sm:w-8 ${
-                  done ? "bg-[var(--color-aura-deep)]/60" : "bg-white/10"
+                  done ? "bg-[var(--color-aura-deep)]/60" : "bg-black/[0.07]"
                 }`}
               />
             )}

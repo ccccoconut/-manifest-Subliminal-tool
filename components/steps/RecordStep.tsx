@@ -149,7 +149,7 @@ export default function RecordStep({
                 background:
                   status === "recording"
                     ? "linear-gradient(180deg,#f0abfc,#a78bfa)"
-                    : "rgba(255,255,255,0.18)",
+                    : "rgba(139,92,246,0.25)",
               }}
             />
           );
@@ -164,14 +164,14 @@ export default function RecordStep({
           <span>
             已录制 {take.durationSec.toFixed(1)}s · 建议 10–30 秒
             {take.durationSec < MIN_TAKE_SEC && (
-              <span className="text-amber-300">（太短了，再读一遍会更好听）</span>
+              <span className="text-amber-600">（太短了，再读一遍会更好听）</span>
             )}
           </span>
         )}
         {status === "idle" && <span>点击下方按钮开始录音</span>}
       </div>
 
-      {error && <p className="mt-3 text-center text-sm text-rose-300">{error}</p>}
+      {error && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
 
       {status === "recorded" && take && (
         <div className="mt-4">

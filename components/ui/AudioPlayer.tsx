@@ -87,7 +87,7 @@ export default function AudioPlayer({
       <div className="flex-1">
         <div
           onClick={seek}
-          className="group relative h-2 cursor-pointer rounded-full bg-white/10"
+          className="group relative h-2 cursor-pointer rounded-full bg-black/[0.07]"
         >
           <div
             className="absolute inset-y-0 left-0 rounded-full"
@@ -97,7 +97,7 @@ export default function AudioPlayer({
             }}
           />
           <div
-            className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white opacity-0 shadow transition-opacity group-hover:opacity-100"
+            className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-[var(--color-aura-deep)] opacity-0 shadow transition-opacity group-hover:opacity-100"
             style={{ left: `calc(${pct}% - 7px)` }}
           />
         </div>
