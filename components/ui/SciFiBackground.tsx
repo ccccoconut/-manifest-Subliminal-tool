@@ -56,8 +56,8 @@ export default function SciFiBackground() {
       canvas!.style.height = h + "px";
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      maxZ = Math.max(w, h);
-      const count = Math.min(280, Math.floor((w * h) / 8500));
+      maxZ = Math.max(w, h) * 0.8;
+      const count = Math.min(300, Math.floor((w * h) / 8000));
       stars = Array.from({ length: count }, () => {
         const z = Math.random() * maxZ;
         return {
@@ -194,13 +194,17 @@ export default function SciFiBackground() {
       }
     }
 
+    // reduced-motion 时不冻结，只放慢（用户明确想要动效）
+    const starSpeed = reduce ? 2.4 : 5.5;
+    const spin = reduce ? 0.00028 : 0.0006;
+
     function render(t: number) {
       ctx!.clearRect(0, 0, w, h);
       ctx!.globalCompositeOperation = "lighter";
       coreGlow(t);
-      drawStars(reduce ? 0 : 1.6);
-      const ay = reduce ? 0.6 : t * 0.00018;
-      const ax = reduce ? 0.3 : Math.sin(t * 0.00007) * 0.35;
+      drawStars(starSpeed);
+      const ay = t * spin;
+      const ax = Math.sin(t * 0.00009) * 0.35;
       ring(ay * 1.3, 1.15, R * 1.5, "rgba(167,139,250,0.5)");
       ring(-ay * 0.9 + 2, 1.45, R * 1.85, "rgba(103,232,249,0.42)");
       drawSphere(ay, ax);
@@ -234,8 +238,8 @@ export default function SciFiBackground() {
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", onVisibility);
 
-    render(0); // 立即画一帧，避免首帧空白；reduced-motion 时即为最终帧
-    if (!reduce) raf = requestAnimationFrame(loop);
+    render(0); // 立即画一帧，避免首帧空白
+    raf = requestAnimationFrame(loop); // reduced-motion 下也动，只是更慢
 
     return () => {
       running = false;
