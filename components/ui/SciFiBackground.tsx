@@ -46,18 +46,9 @@ export default function SciFiBackground() {
 
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      // canvas 为 fixed inset-0，getBoundingClientRect 即视口尺寸，比 innerWidth 更可靠
-      const rect = canvas!.getBoundingClientRect();
-      w =
-        Math.round(rect.width) ||
-        window.innerWidth ||
-        document.documentElement.clientWidth ||
-        0;
-      h =
-        Math.round(rect.height) ||
-        window.innerHeight ||
-        document.documentElement.clientHeight ||
-        0;
+      // 用视口尺寸；canvas 是替换元素，fixed inset-0 不会自动拉伸，必须显式按视口设尺寸
+      w = window.innerWidth || document.documentElement.clientWidth || 0;
+      h = window.innerHeight || document.documentElement.clientHeight || 0;
       if (!w || !h) return; // 布局尚未就绪，等下一帧自愈
       cx = w / 2;
       cy = h * 0.46;
@@ -233,11 +224,10 @@ export default function SciFiBackground() {
     let running = true;
     const loop = (t: number) => {
       if (!running) return;
-      // 自愈：尺寸变化或首帧曾为 0 时重建
-      const rect = canvas!.getBoundingClientRect();
-      const rw = Math.round(rect.width);
-      const rh = Math.round(rect.height);
-      if (rw && rh && (rw !== w || rh !== h)) resize();
+      // 自愈：视口尺寸变化或首帧曾为 0 时重建
+      const iw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const ih = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (iw && ih && (iw !== w || ih !== h)) resize();
       if (w && h) render(t);
       raf = requestAnimationFrame(loop);
     };
