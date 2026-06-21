@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import SciFiBackground from "@/components/ui/SciFiBackground";
 
 export const metadata: Metadata = {
   title: "心声调频 InnerTune · 用自己的声音，生成把自己带回来的音乐",
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body>
         <div className="aurora" aria-hidden />
+        <SciFiBackground />
         {children}
       </body>
     </html>
