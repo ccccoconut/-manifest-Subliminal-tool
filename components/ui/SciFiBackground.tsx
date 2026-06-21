@@ -46,8 +46,19 @@ export default function SciFiBackground() {
 
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = window.innerWidth;
-      h = window.innerHeight;
+      // canvas 为 fixed inset-0，getBoundingClientRect 即视口尺寸，比 innerWidth 更可靠
+      const rect = canvas!.getBoundingClientRect();
+      w =
+        Math.round(rect.width) ||
+        window.innerWidth ||
+        document.documentElement.clientWidth ||
+        0;
+      h =
+        Math.round(rect.height) ||
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        0;
+      if (!w || !h) return; // 布局尚未就绪，等下一帧自愈
       cx = w / 2;
       cy = h * 0.46;
       canvas!.width = Math.floor(w * dpr);
@@ -56,8 +67,8 @@ export default function SciFiBackground() {
       canvas!.style.height = h + "px";
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      maxZ = Math.max(w, h) * 0.8;
-      const count = Math.min(300, Math.floor((w * h) / 8000));
+      maxZ = Math.max(w, h) * 0.78;
+      const count = Math.min(650, Math.floor((w * h) / 3200));
       stars = Array.from({ length: count }, () => {
         const z = Math.random() * maxZ;
         return {
@@ -119,13 +130,20 @@ export default function SciFiBackground() {
         s.pz = s.z;
         if (sx < 0 || sx > w || sy < 0 || sy > h) continue;
         const depth = 1 - s.z / maxZ;
-        const a = 0.25 + depth * 0.75;
-        ctx!.strokeStyle = `rgba(${190 + depth * 55},${220},255,${a})`;
-        ctx!.lineWidth = 0.4 + depth * 2.1;
+        const a = 0.35 + depth * 0.65;
+        ctx!.strokeStyle = `rgba(${195 + depth * 55},${225},255,${a})`;
+        ctx!.lineWidth = 0.6 + depth * 2.4;
         ctx!.beginPath();
         ctx!.moveTo(px, py);
         ctx!.lineTo(sx, sy);
         ctx!.stroke();
+        // 近处星点加亮头，让整屏更明显
+        if (depth > 0.35) {
+          ctx!.fillStyle = `rgba(225,238,255,${a})`;
+          ctx!.beginPath();
+          ctx!.arc(sx, sy, 0.5 + depth * 1.6, 0, Math.PI * 2);
+          ctx!.fill();
+        }
       }
     }
 
@@ -215,7 +233,12 @@ export default function SciFiBackground() {
     let running = true;
     const loop = (t: number) => {
       if (!running) return;
-      render(t);
+      // 自愈：尺寸变化或首帧曾为 0 时重建
+      const rect = canvas!.getBoundingClientRect();
+      const rw = Math.round(rect.width);
+      const rh = Math.round(rect.height);
+      if (rw && rh && (rw !== w || rh !== h)) resize();
+      if (w && h) render(t);
       raf = requestAnimationFrame(loop);
     };
 
@@ -238,8 +261,8 @@ export default function SciFiBackground() {
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", onVisibility);
 
-    render(0); // 立即画一帧，避免首帧空白
-    raf = requestAnimationFrame(loop); // reduced-motion 下也动，只是更慢
+    if (w && h) render(0); // 立即画一帧，避免首帧空白
+    raf = requestAnimationFrame(loop); // 首帧若尺寸为 0，loop 会自愈；reduced-motion 下也动
 
     return () => {
       running = false;
@@ -253,7 +276,8 @@ export default function SciFiBackground() {
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-[1]"
+      className="pointer-events-none fixed inset-0"
+      style={{ zIndex: -1 }}
     />
   );
 }
