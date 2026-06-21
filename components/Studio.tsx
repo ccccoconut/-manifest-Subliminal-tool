@@ -13,7 +13,7 @@ import RecordStep from "@/components/steps/RecordStep";
 import BackgroundStep from "@/components/steps/SoundscapeStep";
 import MixConsoleStep from "@/components/steps/MixConsoleStep";
 import ResultStep from "@/components/steps/ResultStep";
-import { APP_NAME } from "@/lib/constants";
+import { APP_NAME, DEFAULT_RECIPE_DURATION, MAX_TOTAL_DURATION } from "@/lib/constants";
 import { generateFallback } from "@/lib/affirmation/fallback";
 import { renderMix } from "@/lib/audio/mixer";
 import { encodeTrack, type EncodedAudio } from "@/lib/audio/encode";
@@ -52,15 +52,17 @@ function defaultParams(aff: Affirmation): MixParams {
     soundscape: aff.suggestedSoundscape,
     mood: aff.mood,
     rhythm: lively ? "light" : "none",
+    baseHz: 0,
     bgVolume: 0.95,
-    bgPitch: 0,
-    voiceVolume: 1.0,
+    voiceVolume: 0.6, // 潜听：被背景音覆盖
     voiceSpeed: 1.0,
-    voiceLoops: 1,
-    distance: "mid",
+    overlayTracks: 0,
+    stagger: 0,
+    totalDuration: DEFAULT_RECIPE_DURATION,
     binaural: false,
     binauralHz: 7,
     effect8d: false,
+    distance: "mid",
   };
 }
 
@@ -371,7 +373,19 @@ export default function Studio() {
                 params={params}
                 onParamsChange={setParams}
                 bgAudio={bgAudio}
-                onBgAudioChange={setBgAudio}
+                onBgAudioChange={(a) => {
+                  setBgAudio(a);
+                  // 上传音频时，默认总时长 = 该音频时长（上限 30min）
+                  if (a && a.durationSec > 0) {
+                    setParams({
+                      ...params,
+                      totalDuration: Math.min(
+                        MAX_TOTAL_DURATION,
+                        Math.round(a.durationSec)
+                      ),
+                    });
+                  }
+                }}
                 onNext={() => setStep("mixconsole")}
                 onBack={() => setStep("record")}
               />

@@ -38,6 +38,12 @@ function violatesGuardrails(a: Affirmation): boolean {
   return BANNED.some((re) => re.test(text));
 }
 
+// 肯定语必须现在时、正面、无否定词；只检查朗读内容（title/anchor/lines），不检查 understanding 分析文本。
+const NEGATION = /[不没别甭莫勿]|摆脱|拒绝|逃避|避免/;
+function hasNegation(a: Affirmation): boolean {
+  return NEGATION.test([a.title, a.anchorLine, ...a.lines].join(" "));
+}
+
 function coerce(raw: unknown, input: UserInput, tone: ToneKey): Affirmation {
   const fallback = generateFallback(input, tone);
   if (!raw || typeof raw !== "object") return fallback;
@@ -179,8 +185,8 @@ export async function POST(req: Request) {
   }
 
   let ai = await callDeepSeek(input, tone);
-  if (ai && violatesGuardrails(ai)) {
-    console.warn("DeepSeek output hit guardrails, falling back to template");
+  if (ai && (violatesGuardrails(ai) || hasNegation(ai))) {
+    console.warn("DeepSeek output hit guardrails/negation, falling back to template");
     ai = null;
   }
   const affirmation = ai ?? generateFallback(input, tone);

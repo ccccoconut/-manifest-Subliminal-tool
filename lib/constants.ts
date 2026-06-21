@@ -1,4 +1,5 @@
 import type {
+  BaseHz,
   BgSource,
   DistanceKey,
   MoodKey,
@@ -210,6 +211,22 @@ export const QQ_DEMO_TRACKS = [
   { title: "Lofi 专注", artist: "TME 音效库", tag: "专注" },
 ];
 
+// ---------------- AI 定制纯音乐 · 赫兹基准频率 ----------------
+export interface BaseHzOption {
+  hz: BaseHz;
+  label: string;
+  desc: string;
+}
+
+export const BASE_HZ_OPTIONS: BaseHzOption[] = [
+  { hz: 0, label: "标准", desc: "标准 440Hz 调音" },
+  { hz: 432, label: "432Hz", desc: "缓解焦虑、提升内心平静" },
+  { hz: 528, label: "528Hz", desc: "情绪疗愈、增强创造力，修复 DNA 并带来正能量" },
+  { hz: 639, label: "639Hz", desc: "改善社交关系、化解矛盾，促进沟通与共情" },
+  { hz: 741, label: "741Hz", desc: "净化身体毒素、提升直觉，增强自我表达" },
+  { hz: 852, label: "852Hz", desc: "冥想、提升内在知觉" },
+];
+
 // ---------------- 情绪评分维度 ----------------
 export interface RatingDim {
   key: "tension" | "confidence";
@@ -258,9 +275,12 @@ export const DEMO_CASES: DemoCase[] = [
   },
 ];
 
-/** 目标音轨时长区间（秒） */
-export const MIN_DURATION = 30;
-export const MAX_DURATION = 90;
+/** 合成总时长（秒） */
+export const MIN_DURATION = 8; // 渲染下限
+export const MAX_DURATION = 90; // 旧上限（保留兼容）
+export const MIN_TOTAL_DURATION = 15;
+export const MAX_TOTAL_DURATION = 1800; // 30 分钟
+export const DEFAULT_RECIPE_DURATION = 180; // AI 配乐无固定长度时的默认总时长（3 分钟）
 
 // ---------------- 合规文案 ----------------
 export const DISCLAIMER_AUDIO =

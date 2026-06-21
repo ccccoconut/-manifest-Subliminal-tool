@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  BASE_HZ_OPTIONS,
   BG_SOURCES,
   getSoundscape,
   MOOD_LABELS,
@@ -10,6 +11,7 @@ import {
   SOUNDSCAPES,
 } from "@/lib/constants";
 import { startPreview, stopPreview } from "@/lib/audio/soundscapes";
+import { getAudioDuration } from "@/lib/audio/mixer";
 import { BgIcon } from "@/components/ui/icons";
 import type {
   BgAudio,
@@ -97,15 +99,17 @@ export default function BackgroundStep({
     set({ bgSource: s });
   };
 
-  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (bgAudio?.url) URL.revokeObjectURL(bgAudio.url);
+    const durationSec = await getAudioDuration(f);
     onBgAudioChange({
       blob: f,
       name: f.name,
       url: URL.createObjectURL(f),
       source: "upload",
+      durationSec,
     });
   };
 
@@ -210,6 +214,34 @@ export default function BackgroundStep({
               options={RHYTHM_LABELS}
               onChange={(v: RhythmKey) => set({ rhythm: v })}
             />
+          </div>
+
+          {/* 赫兹基准频率 */}
+          <div className="mt-3">
+            <p className="mb-2 text-xs text-[var(--color-haze)]">赫兹基准频率（纯音乐调音）</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {BASE_HZ_OPTIONS.map((o) => {
+                const active = params.baseHz === o.hz;
+                return (
+                  <button
+                    key={o.hz}
+                    onClick={() => set({ baseHz: o.hz })}
+                    className={`rounded-xl p-2.5 text-left transition-all ${
+                      active
+                        ? "bg-[var(--color-aura)]/20 ring-1 ring-[var(--color-aura)]/60"
+                        : "bg-black/[0.05] hover:bg-black/[0.07]"
+                    }`}
+                  >
+                    <span className="text-sm font-semibold text-[var(--color-mist)]">
+                      {o.label}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-snug text-[var(--color-haze)]">
+                      {o.desc}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DISTANCE_HINT } from "@/lib/constants";
 import { renderMix } from "@/lib/audio/mixer";
-import type { BgAudio, DistanceKey, MixParams } from "@/lib/types";
+import type { BgAudio, MixParams } from "@/lib/types";
 
 function Slider({
   label,
@@ -71,7 +70,6 @@ function Toggle({
 }
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
-const semi = (v: number) => `${v > 0 ? "+" : ""}${v} 半音`;
 
 type Preview = "idle" | "rendering" | "playing";
 
@@ -165,6 +163,18 @@ export default function MixConsoleStep({
     onGenerate();
   };
 
+  const hasBg =
+    params.bgSource === "recipe" || (params.bgSource === "upload" && !!bgAudio);
+  const bgDur = bgAudio?.durationSec ?? 0;
+  const durationHint =
+    params.bgSource === "upload" && bgDur > 0
+      ? params.totalDuration < Math.floor(bgDur)
+        ? "合成音频时长小于原音频时长，将自动截断。"
+        : params.totalDuration > Math.ceil(bgDur)
+          ? "合成音频时长超过原音频时长，将自动循环铺满。"
+          : ""
+      : "";
+
   return (
     <div className="mx-auto w-full max-w-2xl">
       <div className="flex items-start justify-between gap-3">
@@ -194,33 +204,21 @@ export default function MixConsoleStep({
         「全曲试听」会用当前参数快速合成约 8 秒，含你的声音 + 背景音 + 效果。
       </p>
 
-      {/* 音轨 1 · 背景音 */}
+      {/* 背景音素材设置 */}
       <div className="glass mt-4 rounded-2xl p-5">
         <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">
-          音轨 1 · 背景音
+          背景音素材设置
         </p>
-        {params.bgSource === "recipe" ||
-        (params.bgSource === "upload" && bgAudio) ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Slider
-              label="音量"
-              value={params.bgVolume}
-              min={0}
-              max={1}
-              step={0.05}
-              onChange={(v) => set({ bgVolume: v })}
-              display={pct}
-            />
-            <Slider
-              label="音调"
-              value={params.bgPitch}
-              min={-12}
-              max={12}
-              step={1}
-              onChange={(v) => set({ bgPitch: v })}
-              display={semi}
-            />
-          </div>
+        {hasBg ? (
+          <Slider
+            label="音量"
+            value={params.bgVolume}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(v) => set({ bgVolume: v })}
+            display={pct}
+          />
         ) : (
           <p className="text-xs text-[var(--color-haze)]">
             当前未添加背景音（
@@ -230,73 +228,76 @@ export default function MixConsoleStep({
         )}
       </div>
 
-      {/* 音轨 2 · 人声 */}
+      {/* 人声素材设置 */}
       <div className="glass mt-4 rounded-2xl p-5">
-        <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">
-          音轨 2 · 你的声音
+        <p className="text-sm font-semibold text-[var(--color-mist)]">人声素材设置</p>
+        <p className="mb-3 mt-1 text-[11px] text-[var(--color-haze)]">
+          肯定语音频会自动循环匹配背景音频长度。
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Slider
-            label="音量"
-            value={params.voiceVolume}
-            min={0}
-            max={1}
-            step={0.05}
-            onChange={(v) => set({ voiceVolume: v })}
-            display={pct}
-          />
-          <Slider
-            label="变速（变速也会改变音高）"
+            label="速度"
             value={params.voiceSpeed}
             min={1}
-            max={10}
-            step={0.5}
+            max={2}
+            step={0.1}
             onChange={(v) => set({ voiceSpeed: v })}
             display={(v) => `${v.toFixed(1)}x`}
           />
-        </div>
-        <div className="mt-4">
-          <p className="mb-2 text-xs text-[var(--color-haze)]">人声循环次数</p>
-          <div className="flex gap-1.5">
-            {[1, 2, 3, 4].map((n) => (
-              <button
-                key={n}
-                onClick={() => set({ voiceLoops: n })}
-                className={`flex-1 rounded-xl py-2 text-sm transition-all ${
-                  params.voiceLoops === n
-                    ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-                    : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
-                }`}
-              >
-                {n} 次
-              </button>
-            ))}
+          <div>
+            <Slider
+              label="音量"
+              value={params.voiceVolume}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(v) => set({ voiceVolume: v })}
+              display={pct}
+            />
+            <p className="mt-1 text-[10px] leading-snug text-[var(--color-haze)]">
+              需要被背景音覆盖，只能听到极细微的沙沙声，不可听清内容。
+            </p>
           </div>
         </div>
-        <div className="mt-4">
-          <p className="mb-2 text-xs text-[var(--color-haze)]">空间感（混响）</p>
-          <div className="flex gap-1.5">
-            {(["near", "mid", "far"] as DistanceKey[]).map((d) => (
-              <button
-                key={d}
-                onClick={() => set({ distance: d })}
-                className={`flex-1 rounded-xl py-2 text-xs transition-all ${
-                  params.distance === d
-                    ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-                    : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
-                }`}
-              >
-                {DISTANCE_HINT[d]}
-              </button>
-            ))}
-          </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Slider
+            label="叠加音轨"
+            value={params.overlayTracks}
+            min={0}
+            max={3}
+            step={1}
+            onChange={(v) => set({ overlayTracks: Math.round(v) })}
+            display={(v) => `${Math.round(v)} 条`}
+          />
+          <Slider
+            label="音轨交错"
+            value={params.stagger}
+            min={0}
+            max={2}
+            step={0.1}
+            onChange={(v) => set({ stagger: v })}
+            display={(v) => `${v.toFixed(1)}s`}
+            disabled={params.overlayTracks < 1}
+          />
         </div>
       </div>
 
-      {/* 其他效果 */}
+      {/* 合成效果 */}
       <div className="glass mt-4 rounded-2xl p-5">
-        <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">其他效果</p>
-        <div className="flex flex-wrap items-center gap-2">
+        <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">合成效果</p>
+        <Slider
+          label="总时长"
+          value={params.totalDuration / 60}
+          min={0.5}
+          max={30}
+          step={0.5}
+          onChange={(v) => set({ totalDuration: Math.round(v * 60) })}
+          display={(v) => `${v} 分钟`}
+        />
+        {durationHint && (
+          <p className="mt-1 text-[10px] leading-snug text-amber-600">{durationHint}</p>
+        )}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Toggle
             label="双耳节拍"
             on={params.binaural}

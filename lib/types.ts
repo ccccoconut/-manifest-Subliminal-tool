@@ -10,6 +10,9 @@ export type RhythmKey = "none" | "light" | "strong";
 /** 背景音来源（STEP 4） */
 export type BgSource = "recipe" | "upload" | "qqmusic" | "none";
 
+/** AI 定制纯音乐的基准频率（0 = 标准 440Hz） */
+export type BaseHz = 0 | 432 | 528 | 639 | 741 | 852;
+
 /** 用户选择的使用场景 */
 export type SceneKey = "interview" | "exam" | "sleep" | "study" | "other";
 
@@ -44,18 +47,20 @@ export interface MixParams {
   soundscape: SoundscapeId;
   mood: MoodKey;
   rhythm: RhythmKey;
-  // 音轨 1 · 背景音
+  baseHz: BaseHz; // AI 定制纯音乐的基准频率
+  // 背景音素材
   bgVolume: number; // 0..1
-  bgPitch: number; // 音调，半音 -12..+12
-  // 音轨 2 · 人声
-  voiceVolume: number; // 0..1
-  voiceSpeed: number; // 变速 1.0..10.0（playbackRate）
-  voiceLoops: number; // 人声循环次数 1..4
-  distance: DistanceKey; // 空间感（混响）
-  // 其他效果
+  // 人声素材
+  voiceVolume: number; // 0..1（潜听，被背景音覆盖）
+  voiceSpeed: number; // 速度 1.0..2.0（playbackRate）
+  overlayTracks: number; // 叠加音轨 0..3
+  stagger: number; // 音轨交错 0..2 秒
+  // 合成效果
+  totalDuration: number; // 总时长（秒），默认背景音时长，上限 30min
   binaural: boolean; // 双耳节拍
   binauralHz: number; // 节拍频率 2..14
   effect8d: boolean; // 8D 声像旋转
+  distance: DistanceKey; // 混响空间感（内部，默认 mid）
 }
 
 /** 上传 / QQ音乐 提供的背景音素材（二进制，单独于 MixParams 携带） */
@@ -64,6 +69,7 @@ export interface BgAudio {
   name: string;
   url: string;
   source: "upload" | "qqmusic";
+  durationSec: number; // 解码得到的时长，用于默认总时长与截断/铺满提示
 }
 
 /** 录音结果 */
