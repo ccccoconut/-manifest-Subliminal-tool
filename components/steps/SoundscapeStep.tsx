@@ -10,6 +10,7 @@ import {
   SOUNDSCAPES,
 } from "@/lib/constants";
 import { startPreview, stopPreview } from "@/lib/audio/soundscapes";
+import { BgIcon } from "@/components/ui/icons";
 import type {
   BgAudio,
   BgSource,
@@ -133,8 +134,8 @@ export default function BackgroundStep({
                   : "bg-white/5 ring-1 ring-white/8 hover:bg-white/10"
               }`}
             >
-              <div className="text-lg">{s.emoji}</div>
-              <p className="mt-1 text-sm font-semibold text-[var(--color-mist)]">
+              <BgIcon source={s.key} className="h-5 w-5 text-[var(--color-mist)]" />
+              <p className="mt-1.5 text-sm font-semibold text-[var(--color-mist)]">
                 {s.label}
               </p>
               <p className="mt-0.5 text-[11px] leading-snug text-[var(--color-haze)]">

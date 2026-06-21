@@ -135,6 +135,22 @@ input {
   background: rgba(167, 139, 250, 0.35);
 }
 
+/* 键盘可达性：清晰的 focus ring（ui-ux-pro-max 无障碍规则） */
+:focus-visible {
+  outline: 2px solid var(--color-aura);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* 可点击元素显示手型光标 */
+button:not(:disabled),
+[role="button"],
+a,
+input[type="range"],
+input[type="checkbox"],
+label:has(input[type="checkbox"]) {
+  cursor: pointer;
+}
+
 /* slim scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

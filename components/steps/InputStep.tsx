@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { APP_NAME, DEMO_CASES, SCENES } from "@/lib/constants";
+import { SceneIcon } from "@/components/ui/icons";
 import type { SceneKey, UserInput } from "@/lib/types";
 
 export default function InputStep({
@@ -44,13 +45,13 @@ export default function InputStep({
           <button
             key={s.key}
             onClick={() => setScene(s.key)}
-            className={`rounded-full px-3.5 py-1.5 text-sm transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-all ${
               scene === s.key
                 ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
                 : "bg-white/5 text-[var(--color-mist-soft)] hover:bg-white/10"
             }`}
           >
-            <span className="mr-1">{s.emoji}</span>
+            <SceneIcon scene={s.key} className="h-4 w-4 opacity-80" />
             {s.label}
           </button>
         ))}
