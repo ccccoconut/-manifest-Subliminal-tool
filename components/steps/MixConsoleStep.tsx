@@ -180,8 +180,9 @@ export default function MixConsoleStep({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold sm:text-3xl">调参 · 混音台</h2>
-          <p className="mt-2 text-sm text-[var(--color-mist-soft)]">
-            像调音师一样微调两条音轨。所有参数仅为声音设计，不宣称任何疗效。
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-mist-soft)]">
+            <span className="font-medium text-[var(--color-aura)]">潜听模式</span>
+            ：你的声音以极低音量循环铺在背景音之下，几乎听不清内容——像一层只属于你的轻声陪伴。
           </p>
         </div>
         <button
