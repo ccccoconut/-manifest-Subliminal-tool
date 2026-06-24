@@ -6,6 +6,10 @@ import ComplianceBar from "@/components/ui/ComplianceBar";
 import SafetyModal, { type SafetyData } from "@/components/ui/SafetyModal";
 import HistoryGallery from "@/components/ui/HistoryGallery";
 import GenerationOverlay from "@/components/ui/GenerationOverlay";
+import HomeDashboard, {
+  type ThemeMode,
+  type UserProfile,
+} from "@/components/HomeDashboard";
 import InputStep from "@/components/steps/InputStep";
 import AffirmationStep from "@/components/steps/AffirmationStep";
 import RecordStep from "@/components/steps/RecordStep";
@@ -39,6 +43,10 @@ const variants = {
   center: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -16 },
 };
+
+const PROFILE_KEY = "innertune.profile.v1";
+const THEME_KEY = "innertune.theme.v1";
+const DEFAULT_PROFILE: UserProfile = { nickname: "我的心声", avatarDataUrl: "" };
 
 function defaultParams(aff: Affirmation): MixParams {
   const lively =
@@ -98,7 +106,7 @@ function ramp(
 }
 
 export default function Studio() {
-  const [step, setStep] = useState<WizardStep>("input");
+  const [step, setStep] = useState<WizardStep>("home");
   const [input, setInput] = useState<UserInput | null>(null);
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null);
   const [voiceTake, setVoiceTake] = useState<VoiceTake | null>(null);
@@ -115,11 +123,54 @@ export default function Studio() {
   const [history, setHistory] = useState<TrackRecord[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const pending = useRef<{ input: UserInput; tone: ToneKey } | null>(null);
 
   useEffect(() => {
     setMounted(true);
     setHistory(loadHistory());
+    try {
+      const savedProfile = localStorage.getItem(PROFILE_KEY);
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        setProfile({
+          nickname:
+            typeof parsed.nickname === "string" && parsed.nickname.trim()
+              ? parsed.nickname
+              : DEFAULT_PROFILE.nickname,
+          avatarDataUrl:
+            typeof parsed.avatarDataUrl === "string" ? parsed.avatarDataUrl : "",
+        });
+      }
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
+    } catch {
+      /* keep defaults */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* noop */
+    }
+  }, [mounted, theme]);
+
+  const updateProfile = useCallback((next: UserProfile) => {
+    const normalized = {
+      nickname: next.nickname.trim() ? next.nickname : DEFAULT_PROFILE.nickname,
+      avatarDataUrl: next.avatarDataUrl,
+    };
+    setProfile(normalized);
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(normalized));
+    } catch {
+      /* noop */
+    }
   }, []);
 
   const runGenerate = useCallback(
@@ -306,11 +357,27 @@ export default function Studio() {
     setParams(null);
     setTrack(null);
     setEncoded(null);
+    setStep("home");
+  };
+
+  const startCreate = () => {
+    if (voiceTake) URL.revokeObjectURL(voiceTake.url);
+    if (bgAudio?.url) URL.revokeObjectURL(bgAudio.url);
+    if (track) URL.revokeObjectURL(track.audioBlobUrl);
+    setInput(null);
+    setAffirmation(null);
+    setVoiceTake(null);
+    setBgAudio(null);
+    setParams(null);
+    setTrack(null);
+    setEncoded(null);
+    setSaved(false);
     setStep("input");
   };
 
   return (
     <main className="relative flex min-h-screen flex-col">
+      {step !== "home" && (
       <header className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
         <button
           onClick={restart}
@@ -335,8 +402,9 @@ export default function Studio() {
           </button>
         )}
       </header>
+      )}
 
-      <section className="flex flex-1 items-center justify-center px-4 py-8">
+      <section className={`flex flex-1 items-center justify-center ${step === "home" ? "" : "px-4 py-8"}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -347,6 +415,16 @@ export default function Studio() {
             transition={{ duration: 0.32, ease: "easeOut" }}
             className="w-full"
           >
+            {step === "home" && (
+              <HomeDashboard
+                records={history}
+                profile={profile}
+                theme={theme}
+                onCreate={startCreate}
+                onProfileChange={updateProfile}
+                onThemeChange={setTheme}
+              />
+            )}
             {step === "input" && (
               <InputStep
                 onGenerate={handleFirstGenerate}
@@ -429,7 +507,7 @@ export default function Studio() {
       </section>
 
       <footer className="pb-6">
-        {step !== "input" && <ComplianceBar compact />}
+        {step !== "home" && step !== "input" && <ComplianceBar compact />}
       </footer>
 
       {genMix && <GenerationOverlay progress={progress} />}

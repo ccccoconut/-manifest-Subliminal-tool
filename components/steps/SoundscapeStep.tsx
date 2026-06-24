@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   BASE_HZ_OPTIONS,
   BG_SOURCES,
-  MOOD_LABELS,
   QQ_DEMO_TRACKS,
   RHYTHM_LABELS,
   SOUNDSCAPES,
@@ -16,7 +15,6 @@ import type {
   BgAudio,
   BgSource,
   MixParams,
-  MoodKey,
   RhythmKey,
   SoundscapeId,
 } from "@/lib/types";
@@ -186,13 +184,7 @@ export default function BackgroundStep({
             })}
           </div>
           {previewError && <p className="mt-2 text-xs text-amber-600">{previewError}</p>}
-          <div className="glass mt-3 grid grid-cols-1 gap-5 rounded-2xl p-5 sm:grid-cols-2">
-            <Segmented
-              label="氛围"
-              value={params.mood}
-              options={MOOD_LABELS}
-              onChange={(v: MoodKey) => set({ mood: v })}
-            />
+          <div className="glass mt-3 rounded-2xl p-5">
             <Segmented
               label="节奏感"
               value={params.rhythm}
@@ -203,7 +195,10 @@ export default function BackgroundStep({
 
           {/* 赫兹基准频率 */}
           <div className="mt-3">
-            <p className="mb-2 text-xs text-[var(--color-haze)]">赫兹基准频率</p>
+            <p className="text-xs font-medium text-[var(--color-haze)]">赫兹基准频率</p>
+            <p className="mb-2 mt-1 text-[11px] leading-relaxed text-[var(--color-haze)]">
+              为纯音乐叠加一层很轻的基准音色，用来改变整体的明暗、厚度和空间感。
+            </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {BASE_HZ_OPTIONS.map((o) => {
                 const active = params.baseHz === o.hz;

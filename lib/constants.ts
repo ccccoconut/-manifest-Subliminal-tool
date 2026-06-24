@@ -218,12 +218,12 @@ export interface BaseHzOption {
 }
 
 export const BASE_HZ_OPTIONS: BaseHzOption[] = [
-  { hz: 0, label: "标准", desc: "标准 440Hz 调音" },
-  { hz: 432, label: "432Hz", desc: "更柔和、低张力的听感" },
-  { hz: 528, label: "528Hz", desc: "更明亮、开阔的声音色彩" },
-  { hz: 639, label: "639Hz", desc: "更温暖、靠近人声的共鸣" },
-  { hz: 741, label: "741Hz", desc: "更清晰、轻盈的高频质感" },
-  { hz: 852, label: "852Hz", desc: "更空灵、安静的空间氛围" },
+  { hz: 0, label: "440Hz（标准）", desc: "沿用现代音乐常见标准音高参考" },
+  { hz: 432, label: "432Hz", desc: "整体略低，听感更暖、更松弛" },
+  { hz: 528, label: "528Hz", desc: "中高频更突出，听感更亮、更展开" },
+  { hz: 639, label: "639Hz", desc: "靠近人声中区，听感更贴近、更温和" },
+  { hz: 741, label: "741Hz", desc: "高频存在感更强，听感更清晰、更轻盈" },
+  { hz: 852, label: "852Hz", desc: "更偏高频空气感，听感更空灵、更远" },
 ];
 
 // ---------------- 情绪评分维度 ----------------

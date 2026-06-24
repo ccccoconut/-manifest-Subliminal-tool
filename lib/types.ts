@@ -109,6 +109,7 @@ export interface Track {
 }
 
 export type WizardStep =
+  | "home"
   | "input"
   | "affirmation"
   | "record"
