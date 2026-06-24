@@ -50,9 +50,9 @@ function coerce(raw: unknown, input: UserInput, tone: ToneKey): Affirmation {
   const o = raw as Record<string, unknown>;
 
   const lines = Array.isArray(o.affirmations)
-    ? o.affirmations.map((l) => String(l).trim()).filter(Boolean).slice(0, 6)
+    ? o.affirmations.map((l) => String(l).trim()).filter(Boolean).slice(0, 8)
     : [];
-  if (lines.length < 3) return fallback; // 质量不足，回退
+  if (lines.length < 1) return fallback; // 质量不足，回退
 
   const tags = Array.isArray(o.emotionTags)
     ? o.emotionTags.map((t) => String(t).trim()).filter(Boolean).slice(0, 4)

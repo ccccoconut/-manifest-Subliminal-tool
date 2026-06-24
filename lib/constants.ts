@@ -197,13 +197,12 @@ export interface BgSourceMeta {
 }
 
 export const BG_SOURCES: BgSourceMeta[] = [
-  { key: "recipe", label: "AI 定制配乐", emoji: "🎼", hint: "程序实时合成、零版权，可调音乐设计" },
-  { key: "upload", label: "上传本地音频", emoji: "📁", hint: "用你自己的音乐 / 白噪作背景（需拥有使用权）" },
-  { key: "qqmusic", label: "从 QQ 音乐选择", emoji: "🎵", hint: "接入授权曲库（演示占位，敬请期待）" },
-  { key: "none", label: "不添加背景", emoji: "🔇", hint: "只保留你的声音，纯人声音轨" },
+  { key: "recipe", label: "AI 定制纯音乐", emoji: "🎼", hint: "" },
+  { key: "upload", label: "上传本地音频", emoji: "📁", hint: "" },
+  { key: "qqmusic", label: "从 QQ 音乐选择", emoji: "🎵", hint: "" },
 ];
 
-/** QQ 音乐接入的演示占位曲目（仅展示，不参与真实混音） */
+/** QQ 音乐接入前的曲库候选展示数据 */
 export const QQ_DEMO_TRACKS = [
   { title: "晴天", artist: "周杰伦", tag: "舒缓" },
   { title: "夜空中最亮的星", artist: "逃跑计划", tag: "鼓励" },
@@ -220,11 +219,11 @@ export interface BaseHzOption {
 
 export const BASE_HZ_OPTIONS: BaseHzOption[] = [
   { hz: 0, label: "标准", desc: "标准 440Hz 调音" },
-  { hz: 432, label: "432Hz", desc: "缓解焦虑、提升内心平静" },
-  { hz: 528, label: "528Hz", desc: "情绪疗愈、增强创造力，修复 DNA 并带来正能量" },
-  { hz: 639, label: "639Hz", desc: "改善社交关系、化解矛盾，促进沟通与共情" },
-  { hz: 741, label: "741Hz", desc: "净化身体毒素、提升直觉，增强自我表达" },
-  { hz: 852, label: "852Hz", desc: "冥想、提升内在知觉" },
+  { hz: 432, label: "432Hz", desc: "更柔和、低张力的听感" },
+  { hz: 528, label: "528Hz", desc: "更明亮、开阔的声音色彩" },
+  { hz: 639, label: "639Hz", desc: "更温暖、靠近人声的共鸣" },
+  { hz: 741, label: "741Hz", desc: "更清晰、轻盈的高频质感" },
+  { hz: 852, label: "852Hz", desc: "更空灵、安静的空间氛围" },
 ];
 
 // ---------------- 情绪评分维度 ----------------
@@ -287,19 +286,3 @@ export const DISCLAIMER_AUDIO =
   "本音频由 AI 辅助生成，用于日常情绪陪伴和自我表达，不构成心理咨询、医疗诊断或治疗建议。";
 export const DISCLAIMER_VOICE = "本功能仅支持使用本人声音或已获明确授权的声音素材。";
 export const DISCLAIMER_RECORD = "请确认录制内容为本人声音，你可以随时删除本次录音。";
-export const DISCLAIMER_SHARE = "AI 辅助生成内容 · 仅分享声景卡片，不含你的原始倾诉。";
-export const DISCLAIMER_AI_VOICE = "AI 合成的通用音色（非真人声音），仅用于本次声景。";
-
-// ---------------- AI 配音音色（Microsoft Edge 神经网络语音，免费、无需 key） ----------------
-export interface AiVoice {
-  id: string; // Edge TTS ShortName
-  label: string;
-  trait: string;
-}
-export const AI_VOICES: AiVoice[] = [
-  { id: "zh-CN-XiaoxiaoNeural", label: "晓晓", trait: "温柔治愈 · 女声" },
-  { id: "zh-CN-XiaoyiNeural", label: "晓伊", trait: "轻快亲和 · 女声" },
-  { id: "zh-CN-YunxiNeural", label: "云希", trait: "温暖陪伴 · 男声" },
-  { id: "zh-CN-YunyangNeural", label: "云扬", trait: "沉稳清晰 · 男声" },
-  { id: "zh-CN-YunjianNeural", label: "云健", trait: "坚定有力 · 男声" },
-];

@@ -48,7 +48,7 @@ export interface RenderInput {
   params: MixParams;
   bgBlob?: Blob | null; // 上传/QQ音乐 的背景音
   onProgress?: (p: number) => void;
-  /** 短预览模式：把时长压到 N 秒（用于「全曲试听」） */
+  /** 短预览模式：把时长压到 N 秒（用于「试听片段」） */
   previewSeconds?: number;
 }
 

@@ -58,11 +58,11 @@ function Toggle({
       className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-sm transition-all ${
         on
           ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-          : "bg-white/[0.05] text-[var(--color-mist-soft)] hover:bg-white/[0.07]"
+          : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
       }`}
     >
       <span
-        className={`h-2 w-2 rounded-full ${on ? "bg-[var(--color-aura)]" : "bg-white/20"}`}
+        className={`h-2 w-2 rounded-full ${on ? "bg-[var(--color-aura)]" : "bg-black/20"}`}
       />
       {label}
     </button>
@@ -163,8 +163,6 @@ export default function MixConsoleStep({
     onGenerate();
   };
 
-  const hasBg =
-    params.bgSource === "recipe" || (params.bgSource === "upload" && !!bgAudio);
   const bgDur = bgAudio?.durationSec ?? 0;
   const durationHint =
     params.bgSource === "upload" && bgDur > 0
@@ -179,11 +177,7 @@ export default function MixConsoleStep({
     <div className="mx-auto w-full max-w-2xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold sm:text-3xl">调参 · 混音台</h2>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--color-mist-soft)]">
-            <span className="font-medium text-[var(--color-aura)]">潜听模式</span>
-            ：你的声音以极低音量循环铺在背景音之下，几乎听不清内容——像一层只属于你的轻声陪伴。
-          </p>
+          <h2 className="text-2xl font-bold sm:text-3xl">调节参数</h2>
         </div>
         <button
           onClick={fullPreview}
@@ -198,37 +192,29 @@ export default function MixConsoleStep({
             ? "合成预览中…"
             : preview === "playing"
               ? "■ 停止试听"
-              : "▶ 全曲试听"}
+              : "▶ 试听片段"}
         </button>
       </div>
 
-      {/* 背景音素材设置 */}
+      {/* 背景音素材 */}
       <div className="glass mt-4 rounded-2xl p-5">
         <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">
-          背景音素材设置
+          背景音素材
         </p>
-        {hasBg ? (
-          <Slider
-            label="音量"
-            value={params.bgVolume}
-            min={0}
-            max={1}
-            step={0.05}
-            onChange={(v) => set({ bgVolume: v })}
-            display={pct}
-          />
-        ) : (
-          <p className="text-xs text-[var(--color-haze)]">
-            当前未添加背景音（
-            {params.bgSource === "qqmusic" ? "QQ 音乐为演示占位" : "已选择不添加"}
-            ），本条为纯人声音轨。
-          </p>
-        )}
+        <Slider
+          label="音量"
+          value={params.bgVolume}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => set({ bgVolume: v })}
+          display={pct}
+        />
       </div>
 
-      {/* 人声素材设置 */}
+      {/* 人声素材 */}
       <div className="glass mt-4 rounded-2xl p-5">
-        <p className="text-sm font-semibold text-[var(--color-mist)]">人声素材设置</p>
+        <p className="text-sm font-semibold text-[var(--color-mist)]">人声素材</p>
         <p className="mb-3 mt-1 text-[11px] text-[var(--color-haze)]">
           肯定语音频会自动循环匹配背景音频长度。
         </p>
@@ -293,7 +279,7 @@ export default function MixConsoleStep({
           display={(v) => `${v} 分钟`}
         />
         {durationHint && (
-          <p className="mt-1 text-[10px] leading-snug text-amber-400">{durationHint}</p>
+          <p className="mt-1 text-[10px] leading-snug text-amber-600">{durationHint}</p>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Toggle

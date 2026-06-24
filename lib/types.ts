@@ -32,7 +32,7 @@ export interface Affirmation {
   understanding: string; // AI 对状态本质的理解（如：你不是能力不足，而是对未知结果感到失控）
   targetState: string; // 目标状态（如：稳定、自信、可行动）
   strategy: string[]; // 生成策略（如：降低比较感、恢复掌控感、强化行动感）
-  lines: string[]; // 5-6 句肯定语
+  lines: string[]; // 1-8 句肯定语
   anchorLine: string; // 核心心声：最适合朗读、最打动人的一句
   suggestedSoundscape: SoundscapeId;
   mood: MoodKey;
@@ -72,14 +72,12 @@ export interface BgAudio {
   durationSec: number; // 解码得到的时长，用于默认总时长与截断/铺满提示
 }
 
-/** 人声结果（本人录音 或 AI 配音） */
+/** 录音结果 */
 export interface VoiceTake {
   blob: Blob;
   url: string;
   durationSec: number;
   mimeType: string;
-  source?: "self" | "ai"; // 默认 self（本人录音）
-  voiceLabel?: string; // AI 配音音色名（如「晓晓」）
 }
 
 /** 情绪评分（1-5）：紧张程度 + 自信程度 */

@@ -27,7 +27,6 @@ import type {
   Affirmation,
   BgAudio,
   MixParams,
-  Ratings,
   ToneKey,
   Track,
   UserInput,
@@ -235,8 +234,9 @@ export default function Studio() {
     }
   };
 
-  const handleRatingsChange = useCallback((ratings: Ratings) => {
-    setTrack((t) => (t ? { ...t, ratings } : t));
+  const handleRenameTrack = useCallback((title: string) => {
+    setTrack((t) => (t ? { ...t, title } : t));
+    setSaved(false);
   }, []);
 
   const handleSave = async () => {
@@ -311,23 +311,37 @@ export default function Studio() {
 
   return (
     <main className="relative flex min-h-screen flex-col">
-      <header className="relative px-4 pt-6">
+      <header className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
+        <button
+          onClick={restart}
+          className="flex items-center gap-2 text-left text-[var(--color-mist)]"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-aura)]/20 text-sm font-semibold text-[var(--color-aura)]">
+            In
+          </span>
+          <span>
+            <span className="block text-sm font-semibold">{APP_NAME}</span>
+            <span className="block text-[11px] text-[var(--color-haze)]">
+              用自己的声音，生成一段把自己带回来的音乐
+            </span>
+          </span>
+        </button>
         {mounted && history.length > 0 && step === "input" && (
           <button
             onClick={() => setShowHistory(true)}
-            className="absolute right-4 top-5 rounded-full border border-white/[0.08] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
+            className="rounded-full border border-black/[0.08] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
           >
             我的音轨 {history.length}
           </button>
         )}
       </header>
 
-      <section className="flex flex-1 items-center justify-center px-4 py-10">
+      <section className="flex flex-1 items-center justify-center px-4 py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
             variants={variants}
-            initial="enter"
+            initial="center"
             animate="center"
             exit="exit"
             transition={{ duration: 0.32, ease: "easeOut" }}
@@ -345,9 +359,12 @@ export default function Studio() {
                 affirmation={affirmation}
                 regenerating={genAff}
                 onLinesChange={(lines) => setAffirmation({ ...affirmation, lines })}
-                onAnchorChange={(anchorLine) =>
-                  setAffirmation({ ...affirmation, anchorLine })
-                }
+                onAnchorChange={(anchorLine) => {
+                  const nextLines = affirmation.lines.length
+                    ? affirmation.lines
+                    : [anchorLine];
+                  setAffirmation({ ...affirmation, anchorLine, lines: nextLines });
+                }}
                 onRegenerate={handleRegenerate}
                 onNext={() => setStep("record")}
                 onBack={() => setStep("input")}
@@ -359,10 +376,6 @@ export default function Studio() {
                 lines={affirmation.lines}
                 initialTake={voiceTake}
                 onDone={handleRecordDone}
-                onQuickGenerate={(take) => {
-                  setVoiceTake(take);
-                  handleGenerateTrack(take);
-                }}
                 onBack={() => setStep("affirmation")}
               />
             )}
@@ -408,7 +421,7 @@ export default function Studio() {
                 onDownloadCover={handleDownloadCover}
                 onShare={handleShare}
                 onRestart={restart}
-                onRatingsChange={handleRatingsChange}
+                onRename={handleRenameTrack}
               />
             )}
           </motion.div>
@@ -416,7 +429,7 @@ export default function Studio() {
       </section>
 
       <footer className="pb-6">
-        <ComplianceBar compact={step === "input"} />
+        {step !== "input" && <ComplianceBar compact />}
       </footer>
 
       {genMix && <GenerationOverlay progress={progress} />}
