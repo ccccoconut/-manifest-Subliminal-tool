@@ -38,7 +38,7 @@ export default function SafetyModal({
           {data.resources.map((r) => (
             <div
               key={r.name + r.phone}
-              className="flex items-center justify-between rounded-xl bg-black/[0.05] px-4 py-3"
+              className="flex items-center justify-between rounded-xl bg-white/[0.05] px-4 py-3"
             >
               <span className="text-sm text-[var(--color-mist-soft)]">{r.name}</span>
               <a

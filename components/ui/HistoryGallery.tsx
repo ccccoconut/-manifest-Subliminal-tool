@@ -58,7 +58,7 @@ export default function HistoryGallery({
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {records.map((r) => (
-              <div key={r.id} className="flex gap-3 rounded-2xl bg-black/[0.05] p-3">
+              <div key={r.id} className="flex gap-3 rounded-2xl bg-white/[0.05] p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={r.coverDataUrl}
@@ -79,7 +79,7 @@ export default function HistoryGallery({
                   <RatingsDelta r={r} />
                   <button
                     onClick={() => onDelete(r.id)}
-                    className="mt-1 text-[11px] text-[var(--color-haze)] hover:text-rose-600"
+                    className="mt-1 text-[11px] text-[var(--color-haze)] hover:text-rose-400"
                   >
                     删除
                   </button>

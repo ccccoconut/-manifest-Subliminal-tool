@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import Stepper from "@/components/ui/Stepper";
 import ComplianceBar from "@/components/ui/ComplianceBar";
 import SafetyModal, { type SafetyData } from "@/components/ui/SafetyModal";
 import HistoryGallery from "@/components/ui/HistoryGallery";
@@ -313,11 +312,10 @@ export default function Studio() {
   return (
     <main className="relative flex min-h-screen flex-col">
       <header className="relative px-4 pt-6">
-        <Stepper current={step} />
         {mounted && history.length > 0 && step === "input" && (
           <button
             onClick={() => setShowHistory(true)}
-            className="absolute right-4 top-5 rounded-full border border-black/[0.08] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
+            className="absolute right-4 top-5 rounded-full border border-white/[0.08] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
           >
             我的音轨 {history.length}
           </button>

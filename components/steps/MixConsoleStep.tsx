@@ -58,11 +58,11 @@ function Toggle({
       className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-sm transition-all ${
         on
           ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-          : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
+          : "bg-white/[0.05] text-[var(--color-mist-soft)] hover:bg-white/[0.07]"
       }`}
     >
       <span
-        className={`h-2 w-2 rounded-full ${on ? "bg-[var(--color-aura)]" : "bg-black/20"}`}
+        className={`h-2 w-2 rounded-full ${on ? "bg-[var(--color-aura)]" : "bg-white/20"}`}
       />
       {label}
     </button>
@@ -201,9 +201,6 @@ export default function MixConsoleStep({
               : "▶ 全曲试听"}
         </button>
       </div>
-      <p className="mt-1.5 text-[11px] text-[var(--color-haze)]">
-        「全曲试听」会用当前参数快速合成约 8 秒，含你的声音 + 背景音 + 效果。
-      </p>
 
       {/* 背景音素材设置 */}
       <div className="glass mt-4 rounded-2xl p-5">
@@ -296,7 +293,7 @@ export default function MixConsoleStep({
           display={(v) => `${v} 分钟`}
         />
         {durationHint && (
-          <p className="mt-1 text-[10px] leading-snug text-amber-600">{durationHint}</p>
+          <p className="mt-1 text-[10px] leading-snug text-amber-400">{durationHint}</p>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Toggle

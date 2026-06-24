@@ -48,7 +48,7 @@ export default function InputStep({
             className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-all ${
               scene === s.key
                 ? "bg-[var(--color-aura)]/25 text-[var(--color-mist)] ring-1 ring-[var(--color-aura)]/60"
-                : "bg-black/[0.05] text-[var(--color-mist-soft)] hover:bg-black/[0.07]"
+                : "bg-white/[0.05] text-[var(--color-mist-soft)] hover:bg-white/[0.07]"
             }`}
           >
             <SceneIcon scene={s.key} className="h-4 w-4 opacity-80" />
@@ -68,7 +68,7 @@ export default function InputStep({
             maxLength={300}
             rows={3}
             placeholder="例如：我明天面试，很怕自己答不好，看到别人都有 offer，觉得自己很差。"
-            className="w-full resize-none rounded-2xl bg-black/[0.05] p-3.5 text-base text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-black/[0.07]"
+            className="w-full resize-none rounded-2xl bg-white/[0.05] p-3.5 text-base text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-white/[0.07]"
           />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -81,7 +81,7 @@ export default function InputStep({
               onChange={(e) => setTarget(e.target.value)}
               maxLength={120}
               placeholder="更稳定、更相信自己"
-              className="w-full rounded-xl bg-black/[0.05] px-3.5 py-2.5 text-sm text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-black/[0.07]"
+              className="w-full rounded-xl bg-white/[0.05] px-3.5 py-2.5 text-sm text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-white/[0.07]"
             />
           </div>
           <div>
@@ -93,7 +93,7 @@ export default function InputStep({
               onChange={(e) => setAvoid(e.target.value)}
               maxLength={120}
               placeholder="不要太鸡血、不要空话"
-              className="w-full rounded-xl bg-black/[0.05] px-3.5 py-2.5 text-sm text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-black/[0.07]"
+              className="w-full rounded-xl bg-white/[0.05] px-3.5 py-2.5 text-sm text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-white/[0.07]"
             />
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function InputStep({
           <button
             key={c.label}
             onClick={() => fillDemo(c)}
-            className="rounded-full border border-black/[0.07] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
+            className="rounded-full border border-white/[0.07] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
           >
             {c.label}
           </button>

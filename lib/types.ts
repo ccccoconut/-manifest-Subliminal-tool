@@ -72,12 +72,14 @@ export interface BgAudio {
   durationSec: number; // 解码得到的时长，用于默认总时长与截断/铺满提示
 }
 
-/** 录音结果 */
+/** 人声结果（本人录音 或 AI 配音） */
 export interface VoiceTake {
   blob: Blob;
   url: string;
   durationSec: number;
   mimeType: string;
+  source?: "self" | "ai"; // 默认 self（本人录音）
+  voiceLabel?: string; // AI 配音音色名（如「晓晓」）
 }
 
 /** 情绪评分（1-5）：紧张程度 + 自信程度 */

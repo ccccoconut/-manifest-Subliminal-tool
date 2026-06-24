@@ -288,3 +288,18 @@ export const DISCLAIMER_AUDIO =
 export const DISCLAIMER_VOICE = "本功能仅支持使用本人声音或已获明确授权的声音素材。";
 export const DISCLAIMER_RECORD = "请确认录制内容为本人声音，你可以随时删除本次录音。";
 export const DISCLAIMER_SHARE = "AI 辅助生成内容 · 仅分享声景卡片，不含你的原始倾诉。";
+export const DISCLAIMER_AI_VOICE = "AI 合成的通用音色（非真人声音），仅用于本次声景。";
+
+// ---------------- AI 配音音色（Microsoft Edge 神经网络语音，免费、无需 key） ----------------
+export interface AiVoice {
+  id: string; // Edge TTS ShortName
+  label: string;
+  trait: string;
+}
+export const AI_VOICES: AiVoice[] = [
+  { id: "zh-CN-XiaoxiaoNeural", label: "晓晓", trait: "温柔治愈 · 女声" },
+  { id: "zh-CN-XiaoyiNeural", label: "晓伊", trait: "轻快亲和 · 女声" },
+  { id: "zh-CN-YunxiNeural", label: "云希", trait: "温暖陪伴 · 男声" },
+  { id: "zh-CN-YunyangNeural", label: "云扬", trait: "沉稳清晰 · 男声" },
+  { id: "zh-CN-YunjianNeural", label: "云健", trait: "坚定有力 · 男声" },
+];

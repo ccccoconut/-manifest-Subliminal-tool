@@ -87,7 +87,7 @@ export default function AudioPlayer({
       <div className="flex-1">
         <div
           onClick={seek}
-          className="group relative h-2 cursor-pointer rounded-full bg-black/[0.07]"
+          className="group relative h-2 cursor-pointer rounded-full bg-white/[0.07]"
         >
           <div
             className="absolute inset-y-0 left-0 rounded-full"
