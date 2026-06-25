@@ -8,7 +8,6 @@ import type { Track } from "@/lib/types";
 
 export default function ResultStep({
   track,
-  saved,
   onSave,
   onDownloadAudio,
   onDownloadCover,
@@ -17,7 +16,6 @@ export default function ResultStep({
   onRename,
 }: {
   track: Track;
-  saved: boolean;
   onSave: () => void;
   onDownloadAudio: () => void;
   onDownloadCover: () => void;
@@ -28,6 +26,10 @@ export default function ResultStep({
   const accent = getSoundscape(track.params.soundscape).accent;
   const [editingTitle, setEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(track.title);
+
+  useEffect(() => {
+    onSave();
+  }, [onSave, track.id]);
 
   useEffect(() => {
     setDraftTitle(track.title);
@@ -137,13 +139,6 @@ export default function ResultStep({
         </button>
         <button onClick={onShare} className="btn-ghost rounded-full px-4 py-2 text-sm">
           分享声景卡片
-        </button>
-        <button
-          onClick={onSave}
-          disabled={saved}
-          className="btn-ghost rounded-full px-4 py-2 text-sm disabled:opacity-50"
-        >
-          {saved ? "✓ 已保存" : "保存到我的音轨"}
         </button>
         <button onClick={onRestart} className="btn-primary rounded-full px-5 py-2 text-sm">
           再做一条 →

@@ -218,7 +218,6 @@ export interface BaseHzOption {
 }
 
 export const BASE_HZ_OPTIONS: BaseHzOption[] = [
-  { hz: 0, label: "440Hz（标准）", desc: "沿用现代音乐常见标准音高参考" },
   { hz: 432, label: "432Hz", desc: "整体略低，听感更暖、更松弛" },
   { hz: 528, label: "528Hz", desc: "中高频更突出，听感更亮、更展开" },
   { hz: 639, label: "639Hz", desc: "靠近人声中区，听感更贴近、更温和" },

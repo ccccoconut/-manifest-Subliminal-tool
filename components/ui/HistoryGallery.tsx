@@ -53,7 +53,7 @@ export default function HistoryGallery({
 
         {records.length === 0 ? (
           <p className="py-10 text-center text-sm text-[var(--color-haze)]">
-            还没有保存的音轨。生成一条后点「保存到我的音轨」。
+            还没有保存的音轨。生成完成后会自动出现在这里。
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

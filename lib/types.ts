@@ -10,7 +10,7 @@ export type RhythmKey = "none" | "light" | "strong";
 /** 背景音来源（STEP 4） */
 export type BgSource = "recipe" | "upload" | "qqmusic" | "none";
 
-/** AI 定制纯音乐的基准频率（0 = 标准 440Hz） */
+/** AI 定制纯音乐的基准频率（0 = 不叠加额外基准音） */
 export type BaseHz = 0 | 432 | 528 | 639 | 741 | 852;
 
 /** 用户选择的使用场景 */

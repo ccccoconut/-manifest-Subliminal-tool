@@ -290,8 +290,9 @@ export default function Studio() {
     setSaved(false);
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!track) return;
+    if (saved) return;
     setSaved(true);
     const thumb = await makeThumb(track.coverDataUrl);
     const record: TrackRecord = {
@@ -308,7 +309,7 @@ export default function Studio() {
       createdAt: track.createdAt,
     };
     setHistory(saveTrack(record));
-  };
+  }, [saved, track]);
 
   const handleDownloadAudio = () => {
     if (!encoded || !track) return;
@@ -493,7 +494,6 @@ export default function Studio() {
             {step === "result" && track && (
               <ResultStep
                 track={track}
-                saved={saved}
                 onSave={handleSave}
                 onDownloadAudio={handleDownloadAudio}
                 onDownloadCover={handleDownloadCover}
