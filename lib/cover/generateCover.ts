@@ -1,4 +1,4 @@
-import { getSoundscape } from "../constants";
+import { APP_NAME, getSoundscape } from "../constants";
 import type { SoundscapeId } from "../types";
 
 export interface CoverInput {
@@ -108,7 +108,7 @@ export function generateCover(input: CoverInput): string {
   ctx.fillStyle = hexA("#ffffff", 0.92);
   ctx.font = "600 30px " + FONT;
   ctx.textBaseline = "middle";
-  ctx.fillText("心声调频 InnerTune", 86, 72);
+  ctx.fillText(APP_NAME, 86, 72);
 
   // title (wrapped)
   const clean = input.title.replace(/[《》]/g, "");

@@ -16,7 +16,7 @@ import RecordStep from "@/components/steps/RecordStep";
 import BackgroundStep from "@/components/steps/SoundscapeStep";
 import MixConsoleStep from "@/components/steps/MixConsoleStep";
 import ResultStep from "@/components/steps/ResultStep";
-import { APP_NAME, DEFAULT_RECIPE_DURATION, MAX_TOTAL_DURATION } from "@/lib/constants";
+import { APP_NAME, APP_TAGLINE, DEFAULT_RECIPE_DURATION, MAX_TOTAL_DURATION } from "@/lib/constants";
 import { generateFallback } from "@/lib/affirmation/fallback";
 import { renderMix } from "@/lib/audio/mixer";
 import { encodeTrack, type EncodedAudio } from "@/lib/audio/encode";
@@ -82,7 +82,7 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 function sanitize(name: string) {
-  return name.replace(/[《》\\/:*?"<>|]/g, "").trim() || "心声调频";
+  return name.replace(/[《》\\/:*?"<>|]/g, "").trim() || APP_NAME;
 }
 
 /** 平滑推进进度（用于四阶段生成动画）。用定时器而非 rAF，确保标签页切到后台时仍能推进。 */
@@ -338,7 +338,7 @@ export default function Studio() {
         await navigator.share({
           files: [file],
           title: track.title,
-          text: `我用${APP_NAME}生成了一段属于自己的心声调频：${track.title}`,
+          text: `我用${APP_NAME}生成了一段专属于自己的显化sub：${track.title}`,
         });
         return;
       }
@@ -384,20 +384,20 @@ export default function Studio() {
           onClick={restart}
           className="flex items-center gap-2 text-left text-[var(--color-mist)]"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-aura)]/20 text-sm font-semibold text-[var(--color-aura)]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/50 text-sm font-semibold text-[var(--color-aura-deep)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ring-1 ring-white/70">
             In
           </span>
           <span>
             <span className="block text-sm font-semibold">{APP_NAME}</span>
             <span className="block text-[11px] text-[var(--color-haze)]">
-              用自己的声音，生成一段把自己带回来的音乐
+              {APP_TAGLINE}
             </span>
           </span>
         </button>
         {mounted && history.length > 0 && step === "input" && (
           <button
             onClick={() => setShowHistory(true)}
-            className="rounded-full border border-black/[0.08] px-3 py-1.5 text-xs text-[var(--color-mist-soft)] transition-colors hover:border-[var(--color-aura)]/60 hover:text-[var(--color-mist)]"
+            className="btn-ghost rounded-full px-3 py-1.5 text-xs"
           >
             我的音轨 {history.length}
           </button>

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { APP_NAME } from "@/lib/constants";
+import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 import type { TrackRecord } from "@/lib/history";
 
 export type ThemeMode = "light" | "dark";
@@ -81,7 +81,7 @@ export default function HomeDashboard({
           </div>
           <div>
             <p className="text-sm font-semibold text-[var(--color-mist)]">{APP_NAME}</p>
-            <p className="text-[11px] text-[var(--color-haze)]">个人声音音乐工作台</p>
+            <p className="text-[11px] text-[var(--color-haze)]">{APP_TAGLINE}</p>
           </div>
         </div>
         <button

@@ -10,8 +10,8 @@ import type {
 } from "./types";
 
 // ---------------- 品牌 ----------------
-export const APP_NAME = "心声调频 InnerTune";
-export const APP_TAGLINE = "用自己的声音，生成一段把自己带回来的音乐。";
+export const APP_NAME = "酥饼";
+export const APP_TAGLINE = "用你的声音，生成专属于你的显化sub。";
 
 // ---------------- 声景配方 Sound Recipe ----------------
 export interface SoundscapeMeta {
@@ -42,8 +42,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "面试 / 考试 / 汇报前",
     design: "稳定节奏 · 温暖和声 · 人声更清晰",
     blurb: "明亮坚定的挂留和弦与轻微脉冲，给你向前的底气。",
-    palette: ["#0c2826", "#16544c", "#2dd4bf"],
-    accent: "#5eead4",
+    palette: ["#1f5f52", "#2ebfa7", "#b1ffec"],
+    accent: "#2ebfa7",
     audio: {
       rootFreq: 164.81,
       chord: [0, 5, 7, 12],
@@ -61,8 +61,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "焦虑后 / 需要喘口气",
     design: "慢速氛围 · 轻柔和声 · 人声更柔和",
     blurb: "饱满温暖的小七和弦，像被轻轻抱住。",
-    palette: ["#241327", "#5b2a52", "#a85795"],
-    accent: "#f0abfc",
+    palette: ["#dffcf2", "#b1ffec", "#7bdcc8"],
+    accent: "#7bdcc8",
     audio: {
       rootFreq: 146.83,
       chord: [0, 3, 7, 10],
@@ -80,8 +80,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "学习 / 工作前",
     design: "低干扰节拍 · 简洁旋律 · 减少歌词感",
     blurb: "均匀的白噪与开放五度，帮你进入稳定的专注。",
-    palette: ["#0d1f2b", "#1e3a52", "#38bdf8"],
-    accent: "#7dd3fc",
+    palette: ["#eaf8d0", "#cef595", "#92c95b"],
+    accent: "#9acb55",
     audio: {
       rootFreq: 196.0,
       chord: [0, 7, 12],
@@ -99,8 +99,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "情绪低落 / 内耗后",
     design: "由低到高的情绪递进 · 呼吸般的起伏",
     blurb: "通透的大调与晨雾般的空气感，带来轻盈的重新开始。",
-    palette: ["#2a1c10", "#7a4a26", "#f0a868"],
-    accent: "#fbbf24",
+    palette: ["#fff7d9", "#ffe588", "#f5c95c"],
+    accent: "#f5c95c",
     audio: {
       rootFreq: 174.61,
       chord: [0, 4, 7, 14],
@@ -118,8 +118,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "睡前放松",
     design: "低沉暖垫 · 极轻气声 · 慢呼吸",
     blurb: "低沉温柔的暖垫与极轻气声，帮助身体慢下来。",
-    palette: ["#10112b", "#2a2a6e", "#5b54d6"],
-    accent: "#a5b4fc",
+    palette: ["#15332e", "#295e54", "#b1ffec"],
+    accent: "#b1ffec",
     audio: {
       rootFreq: 130.81,
       chord: [0, 3, 7, 14],
@@ -284,4 +284,4 @@ export const DEFAULT_RECIPE_DURATION = 180; // AI 配乐无固定长度时的默
 export const DISCLAIMER_AUDIO =
   "本音频由 AI 辅助生成，用于日常情绪陪伴和自我表达，不构成心理咨询、医疗诊断或治疗建议。";
 export const DISCLAIMER_VOICE = "本功能仅支持使用本人声音或已获明确授权的声音素材。";
-export const DISCLAIMER_RECORD = "请确认录制内容为本人声音，你可以随时删除本次录音。";
+export const DISCLAIMER_RECORD = "我确认本段录音为本人声音，我允许使用生成本次音频。";

@@ -17,7 +17,7 @@ const STAGES = [
   },
   {
     title: "正在生成专属封面",
-    detail: "为这段心声调频画一张可收藏的封面。",
+    detail: "为这段显化sub画一张可收藏的封面。",
   },
 ];
 
@@ -33,7 +33,7 @@ export default function GenerationOverlay({ progress }: { progress: number }) {
         className="glass relative w-full max-w-md rounded-[var(--radius-2xl)] p-7"
       >
         <p className="text-center text-sm text-[var(--color-aura)]">
-          正在生成你的心声调频…
+          正在生成你的显化sub…
         </p>
         <div className="mt-6 space-y-4">
           {STAGES.map((s, i) => {

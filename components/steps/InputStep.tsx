@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { APP_NAME } from "@/lib/constants";
 import type { UserInput } from "@/lib/types";
 
 export default function InputStep({
@@ -27,7 +26,7 @@ export default function InputStep({
         在想什么呢？
       </h1>
       <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[var(--color-mist-soft)] sm:text-base">
-        可以说说你的现状、担心或者期许~InnerTune 会自动生成适合你的肯定语。
+        可以说说你的现状、担心或者期许~酥饼会自动生成适合你的肯定语。
       </p>
 
       <div className="glass mt-7 rounded-[var(--radius-2xl)] p-4 text-left sm:p-5">
@@ -39,10 +38,7 @@ export default function InputStep({
           placeholder="例如：我想拿到这个 offer，但我总担心自己表达不好，也会忍不住和别人比较。"
           className="w-full resize-none rounded-3xl bg-black/[0.05] p-5 text-lg leading-relaxed text-[var(--color-mist)] outline-none placeholder:text-[var(--color-haze)] focus:bg-black/[0.07] sm:text-xl"
         />
-        <div className="mt-2 flex items-start justify-between gap-3 px-1 text-[11px] leading-relaxed text-[var(--color-haze)]">
-          <span>
-            内容仅用于生成本次心声调频；公开分享卡片不包含原始输入和本人录音。
-          </span>
+        <div className="mt-2 flex items-start justify-end gap-3 px-1 text-[11px] leading-relaxed text-[var(--color-haze)]">
           <span className="shrink-0 tabular-nums">{message.length}/200</span>
         </div>
       </div>

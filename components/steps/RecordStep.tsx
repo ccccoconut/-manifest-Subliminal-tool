@@ -170,7 +170,7 @@ export default function RecordStep({
           className="mt-0.5 h-4 w-4 accent-[var(--color-aura)]"
         />
         <span className="max-w-md text-left">
-          我确认本段录音为本人声音，仅用于生成本次音频。{DISCLAIMER_RECORD}
+          {DISCLAIMER_RECORD}
         </span>
       </label>
 

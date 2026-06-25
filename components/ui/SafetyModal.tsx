@@ -30,7 +30,7 @@ export default function SafetyModal({
           先停下来，给自己一点支持
         </h3>
         <p className="mt-3 text-sm leading-relaxed text-[var(--color-mist-soft)]">
-          看起来你正经历很难的时刻。心频是一个放松与自我肯定工具，
+          看起来你正经历很难的时刻。酥饼是一个放松与自我肯定工具，
           <span className="text-[var(--color-mist)]">不能替代专业的心理帮助</span>。
           如果你有伤害自己或他人的念头，请第一时间联系下面的热线，或身边信任的人。
         </p>

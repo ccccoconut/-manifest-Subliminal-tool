@@ -321,7 +321,7 @@ export default function MixConsoleStep({
           disabled={generating}
           className="btn-primary rounded-full px-8 py-3.5 text-base"
         >
-          {generating ? "生成中…" : "合成我的心声调频 ✨"}
+          {generating ? "生成中…" : "合成我的显化sub ✨"}
         </button>
       </div>
     </div>

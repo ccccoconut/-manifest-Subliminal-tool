@@ -2,7 +2,7 @@
   "name": "inner-tune",
   "version": "0.1.0",
   "private": true,
-  "description": "心频 InnerTune — AI 个性化自我肯定音轨生成器",
+  "description": "酥饼 — 用你的声音，生成专属于你的显化sub",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +15,8 @@
     "gsap": "^3.15.0",
     "next": "^15.3.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

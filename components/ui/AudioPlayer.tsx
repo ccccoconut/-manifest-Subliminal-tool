@@ -11,7 +11,7 @@ function fmt(sec: number): string {
 
 export default function AudioPlayer({
   src,
-  accent = "#a78bfa",
+  accent = "#2ebfa7",
 }: {
   src: string;
   accent?: string;
@@ -69,7 +69,7 @@ export default function AudioPlayer({
         aria-label={playing ? "暂停" : "播放"}
         className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105"
         style={{
-          background: `linear-gradient(135deg, ${accent}, #f0abfc)`,
+          background: `linear-gradient(135deg, ${accent}, #cef595)`,
           boxShadow: `0 8px 30px -8px ${accent}`,
         }}
       >
@@ -93,7 +93,7 @@ export default function AudioPlayer({
             className="absolute inset-y-0 left-0 rounded-full"
             style={{
               width: `${pct}%`,
-              background: `linear-gradient(90deg, ${accent}, #f0abfc)`,
+              background: `linear-gradient(90deg, ${accent}, #cef595)`,
             }}
           />
           <div
