@@ -87,22 +87,21 @@ export default function RecordStep({
   };
 
   const recording = status === "recording";
+  const affirmations = lines.length ? lines : [anchorLine];
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <div className="text-center">
-        <h2 className="text-xl font-bold leading-snug text-[var(--color-mist)] sm:text-2xl">
-          用自己的声音，坚定地读出肯定语
-        </h2>
-      </div>
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-2xl flex-col">
+      <h2 className="shrink-0 text-center text-base font-bold leading-snug text-[var(--color-mist)] sm:text-lg">
+        用自己的声音，坚定地读出肯定语
+      </h2>
 
-      {/* affirmations */}
-      <div className="glass mt-6 rounded-2xl p-6 text-center">
-        <ul className="space-y-3 text-left">
-          {(lines.length ? lines : [anchorLine]).map((line, i) => (
+      {/* Affirmations: fixed short card, scroll inside */}
+      <div className="glass mt-3 flex min-h-[7rem] flex-1 flex-col overflow-hidden rounded-2xl">
+        <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 py-3 text-left">
+          {affirmations.map((line, i) => (
             <li
               key={`${line}-${i}`}
-              className="rounded-2xl bg-black/[0.04] px-4 py-3 text-base font-medium leading-relaxed text-[var(--color-mist)] sm:text-lg"
+              className="rounded-xl bg-black/[0.04] px-3 py-2.5 text-sm font-medium leading-relaxed text-[var(--color-mist)] sm:text-[0.95rem]"
             >
               {line}
             </li>
@@ -110,62 +109,55 @@ export default function RecordStep({
         </ul>
       </div>
 
-      <div className="mt-5">
-        <VoiceOrb level={level} active={recording} />
-      </div>
+      {/* Controls stay on the same screen — no page scroll needed */}
+      <div className="mt-3 flex shrink-0 flex-col items-center gap-2 pb-1">
+        <VoiceOrb level={level} active={recording} compact />
 
-      <div className="min-h-[1.25rem] text-center text-sm tabular-nums text-[var(--color-haze)]">
-        {status === "recording" && (
-          <span className="text-[var(--color-glow)]">● 录音中 {elapsed.toFixed(1)}s</span>
-        )}
-        {status === "recorded" && take && (
-          <span>
-            已录制 {take.durationSec.toFixed(1)}s · 建议 10–30 秒
-            {take.durationSec < MIN_TAKE_SEC && (
-              <span className="text-amber-600">（太短了，再读一遍会更好听）</span>
-            )}
-          </span>
-        )}
-      </div>
-
-      {error && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
-
-      {status === "recorded" && take && (
-        <div className="mt-4">
-          <audio src={take.url} controls className="mx-auto w-full max-w-md" />
+        <div className="min-h-[1.1rem] text-center text-xs tabular-nums text-[var(--color-haze)]">
+          {status === "recording" && (
+            <span className="text-[var(--color-glow)]">● 录音中 {elapsed.toFixed(1)}s</span>
+          )}
+          {status === "recorded" && take && (
+            <span>
+              已录制 {take.durationSec.toFixed(1)}s · 建议 10–30 秒
+              {take.durationSec < MIN_TAKE_SEC && (
+                <span className="text-amber-600">（太短了，再读一遍会更好听）</span>
+              )}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* consent */}
-      <label className="mt-5 flex items-start justify-center gap-2 text-xs text-[var(--color-mist-soft)]">
-        <input
-          type="checkbox"
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-[var(--color-aura)]"
-        />
-        <span className="max-w-md text-left">
-          {DISCLAIMER_RECORD}
-        </span>
-      </label>
+        {error && <p className="text-center text-xs text-rose-600">{error}</p>}
 
-      {/* controls */}
-      <div className="mt-6 flex flex-col items-center gap-4">
-        {status === "idle" || status === "error" ? (
-          <button onClick={start} className="btn-primary rounded-full px-8 py-3.5 text-base">
-            {status === "error" ? "允许麦克风后 · 重新尝试" : "开始录音"}
-          </button>
-        ) : status === "recording" ? (
-          <button
-            onClick={stop}
-            className="flex items-center gap-2 rounded-full bg-rose-500/90 px-8 py-3.5 text-base font-semibold text-white transition-transform hover:scale-105"
-          >
-            <span className="h-3 w-3 rounded-sm bg-white" /> 停止录音
-          </button>
-        ) : (
-          <div className="flex flex-col items-center gap-3">
+        {status === "recorded" && take && (
+          <audio src={take.url} controls className="mx-auto h-9 w-full max-w-md" />
+        )}
+
+        <label className="flex max-w-md items-start gap-2 text-[11px] leading-snug text-[var(--color-mist-soft)]">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[var(--color-aura)]"
+          />
+          <span className="text-left">{DISCLAIMER_RECORD}</span>
+        </label>
+
+        <div className="flex w-full flex-col items-center pt-1">
+          {status === "idle" || status === "error" ? (
+            <button onClick={start} className="btn-primary rounded-full px-8 py-3 text-sm">
+              {status === "error" ? "允许麦克风后 · 重新尝试" : "开始录音"}
+            </button>
+          ) : status === "recording" ? (
+            <button
+              onClick={stop}
+              className="flex items-center gap-2 rounded-full bg-rose-500/90 px-8 py-3 text-sm font-semibold text-white transition-transform hover:scale-105"
+            >
+              <span className="h-3 w-3 rounded-sm bg-white" /> 停止录音
+            </button>
+          ) : (
             <div className="flex items-center gap-3">
-              <button onClick={reRecord} className="btn-ghost rounded-full px-6 py-3 text-sm">
+              <button onClick={reRecord} className="btn-ghost rounded-full px-5 py-2.5 text-sm">
                 重录
               </button>
               <button
@@ -173,13 +165,13 @@ export default function RecordStep({
                   take && consent && take.durationSec >= MIN_TAKE_SEC && onDone(take)
                 }
                 disabled={!consent || !take || take.durationSec < MIN_TAKE_SEC}
-                className="btn-primary rounded-full px-7 py-3 text-base disabled:opacity-50"
+                className="btn-primary rounded-full px-6 py-2.5 text-sm disabled:opacity-50"
               >
                 下一步：选背景音 →
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

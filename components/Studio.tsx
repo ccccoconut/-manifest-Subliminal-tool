@@ -484,7 +484,9 @@ export default function Studio() {
         className={`flex min-h-0 flex-1 ${
           step === "home"
             ? "flex-col overflow-hidden"
-            : "items-start justify-center overflow-y-auto overscroll-contain px-4 pb-8 pt-1"
+            : step === "record"
+              ? "flex-col overflow-hidden px-4 pb-3 pt-1"
+              : "items-start justify-center overflow-y-auto overscroll-contain px-4 pb-8 pt-1"
         }`}
       >
         <AnimatePresence mode="wait">
@@ -495,7 +497,11 @@ export default function Studio() {
             animate="center"
             exit="exit"
             transition={{ duration: 0.32, ease: "easeOut" }}
-            className={step === "home" ? "flex h-full min-h-0 w-full flex-col" : "w-full"}
+            className={
+              step === "home" || step === "record"
+                ? "flex h-full min-h-0 w-full flex-col"
+                : "w-full"
+            }
           >
             {step === "home" && (
               <HomeDashboard
@@ -594,8 +600,8 @@ export default function Studio() {
         </AnimatePresence>
       </section>
 
-      {step !== "home" && step !== "input" && (
-        <footer className="pb-6">
+      {step !== "home" && step !== "input" && step !== "record" && (
+        <footer className="shrink-0 pb-6">
           <ComplianceBar compact />
         </footer>
       )}

@@ -9,10 +9,12 @@ import { useEffect } from "react";
 export default function VoiceOrb({
   level,
   active,
+  compact = false,
 }: {
   /** 0..1 mic loudness */
   level: number;
   active: boolean;
+  compact?: boolean;
 }) {
   const target = active ? Math.min(1, Math.max(0, level)) : 0;
   const smooth = useSpring(target, { stiffness: 200, damping: 20, mass: 0.3 });
@@ -21,16 +23,22 @@ export default function VoiceOrb({
     smooth.set(target);
   }, [smooth, target]);
 
-  const scale = useTransform(smooth, [0, 1], [1, 1.32]);
+  const scale = useTransform(smooth, [0, 1], [1, compact ? 1.22 : 1.32]);
   const glowOpacity = useTransform(smooth, [0, 1], [0.4, 1]);
-  const ringScale = useTransform(smooth, [0, 1], [1, 1.5]);
+  const ringScale = useTransform(smooth, [0, 1], [1, compact ? 1.35 : 1.5]);
   const ringOpacity = useTransform(smooth, [0, 1], [0.18, 0.6]);
 
   return (
-    <div className="relative mx-auto flex h-[7.5rem] w-full items-center justify-center">
+    <div
+      className={`relative mx-auto flex w-full items-center justify-center ${
+        compact ? "h-[5.25rem]" : "h-[7.5rem]"
+      }`}
+    >
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute h-28 w-28 rounded-full"
+        className={`pointer-events-none absolute rounded-full ${
+          compact ? "h-20 w-20" : "h-28 w-28"
+        }`}
         style={{
           scale: ringScale,
           opacity: ringOpacity,
@@ -41,7 +49,7 @@ export default function VoiceOrb({
       />
 
       <motion.div
-        className="relative h-[5.75rem] w-[5.75rem]"
+        className={`relative ${compact ? "h-[4.25rem] w-[4.25rem]" : "h-[5.75rem] w-[5.75rem]"}`}
         animate={active ? { scale: 1 } : { scale: [0.92, 1, 0.92] }}
         transition={
           active
