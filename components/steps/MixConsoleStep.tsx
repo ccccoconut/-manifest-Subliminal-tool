@@ -79,7 +79,6 @@ export default function MixConsoleStep({
   voiceBlob,
   bgAudio,
   onGenerate,
-  onBack,
   generating,
 }: {
   params: MixParams;
@@ -87,10 +86,10 @@ export default function MixConsoleStep({
   voiceBlob: Blob;
   bgAudio: BgAudio | null;
   onGenerate: () => void;
-  onBack: () => void;
   generating: boolean;
 }) {
   const [preview, setPreview] = useState<Preview>("idle");
+  const [previewError, setPreviewError] = useState("");
   const ctxRef = useRef<AudioContext | null>(null);
   const srcRef = useRef<AudioBufferSourceNode | null>(null);
   const genRef = useRef(0); // 自增令牌：作废在途的离线渲染
@@ -126,16 +125,22 @@ export default function MixConsoleStep({
     }
     const myGen = ++genRef.current;
     setPreview("rendering");
+    setPreviewError("");
     let buffer: AudioBuffer;
     try {
       ({ buffer } = await renderMix({
         voiceBlob,
         params,
         bgBlob: bgAudio?.blob ?? null,
-        previewSeconds: 8,
+        previewSeconds: 15,
       }));
-    } catch {
-      if (mountedRef.current && genRef.current === myGen) setPreview("idle");
+    } catch (err) {
+      if (mountedRef.current && genRef.current === myGen) {
+        setPreview("idle");
+        setPreviewError(
+          err instanceof Error ? err.message : "试听合成失败，请检查音频文件后重试"
+        );
+      }
       return;
     }
     // 渲染期间被取消（再次点击/卸载/点了生成）→ 丢弃结果，不创建 AudioContext
@@ -164,6 +169,7 @@ export default function MixConsoleStep({
   };
 
   const bgDur = bgAudio?.durationSec ?? 0;
+  const uploadMissingBg = params.bgSource === "upload" && !bgAudio;
   const durationHint =
     params.bgSource === "upload" && bgDur > 0
       ? params.totalDuration < Math.floor(bgDur)
@@ -177,7 +183,9 @@ export default function MixConsoleStep({
     <div className="mx-auto w-full max-w-2xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold sm:text-3xl">调节参数</h2>
+          <h2 className="text-xl font-bold leading-snug text-[var(--color-mist)] sm:text-2xl">
+            调节参数
+          </h2>
         </div>
         <button
           onClick={fullPreview}
@@ -200,7 +208,25 @@ export default function MixConsoleStep({
       <div className="glass mt-4 rounded-2xl p-5">
         <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">
           背景音素材
+          {params.bgSource === "upload" && bgAudio && (
+            <span className="ml-2 text-xs font-normal text-[var(--color-haze)]">
+              {bgAudio.name}
+            </span>
+          )}
+          {params.bgSource === "recipe" && (
+            <span className="ml-2 text-xs font-normal text-[var(--color-haze)]">
+              AI生成纯音乐
+            </span>
+          )}
         </p>
+        {uploadMissingBg && (
+          <p className="mb-3 text-xs text-amber-600">
+            未检测到上传的背景音频，请返回上一步重新选择文件。
+          </p>
+        )}
+        {previewError && (
+          <p className="mb-3 text-xs text-amber-600">{previewError}</p>
+        )}
         <Slider
           label="音量"
           value={params.bgVolume}
@@ -223,7 +249,7 @@ export default function MixConsoleStep({
             label="速度"
             value={params.voiceSpeed}
             min={1}
-            max={2}
+            max={5}
             step={0.1}
             onChange={(v) => set({ voiceSpeed: v })}
             display={(v) => `${v.toFixed(1)}x`}
@@ -308,18 +334,11 @@ export default function MixConsoleStep({
         )}
       </div>
 
-      <div className="mt-7 flex items-center justify-between">
-        <button
-          onClick={onBack}
-          disabled={generating}
-          className="text-sm text-[var(--color-haze)] hover:text-[var(--color-mist)] disabled:opacity-40"
-        >
-          ← 返回背景音
-        </button>
+      <div className="mt-7 flex items-center justify-end">
         <button
           onClick={handleGenerate}
-          disabled={generating}
-          className="btn-primary rounded-full px-8 py-3.5 text-base"
+          disabled={generating || uploadMissingBg}
+          className="btn-primary rounded-full px-8 py-3 text-sm sm:py-3.5 sm:text-base"
         >
           {generating ? "生成中…" : "合成我的显化sub ✨"}
         </button>

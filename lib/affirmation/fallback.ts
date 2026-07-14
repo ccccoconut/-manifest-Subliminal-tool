@@ -95,7 +95,7 @@ const THEMES: Theme[] = [
   {
     key: "sleep",
     keywords: ["睡", "失眠", "晚上", "夜里", "想太多", "内耗", "停不下来", "脑子", "休息", "安睡"],
-    soundscape: "sleep",
+    soundscape: "calm",
     mood: "gentle",
     scene: "睡前 / 夜里醒来时",
     understanding: "你不是不够努力，而是白天的紧绷还没有被允许放下。",
@@ -205,7 +205,7 @@ const DEFAULT_THEME: Theme = {
   firm: ["我有力量面对接下来的事，我稳稳的。"],
 };
 
-function pickTheme(text: string): Theme {
+export function pickTheme(text: string): Theme {
   let best: Theme | null = null;
   let bestScore = 0;
   for (const t of THEMES) {
@@ -228,14 +228,20 @@ const SCENE_HINT: Record<string, string> = {
   study: "focus",
 };
 
-/** 基于关键词的本地肯定语生成（无 API key 时兜底，离线可用）。全部正面现在时。 */
-export function generateFallback(input: UserInput, tone: ToneKey): Affirmation {
+/** 与 fallback 一致的主题解析：关键词优先，否则按用户选择的场景 hint。 */
+export function resolveThemeForInput(input: UserInput) {
   const text = `${input.state} ${input.target}`.trim();
   let theme = pickTheme(text || "");
   const sceneKey = SCENE_HINT[input.scene];
   if (sceneKey && theme.key === DEFAULT_THEME.key) {
     theme = THEMES.find((t) => t.key === sceneKey) ?? theme;
   }
+  return theme;
+}
+
+/** 基于关键词的本地肯定语生成（无 API key 时兜底，离线可用）。全部正面现在时。 */
+export function generateFallback(input: UserInput, tone: ToneKey): Affirmation {
+  const theme = resolveThemeForInput(input);
 
   const titleIdx = (input.state.length + tone.length) % theme.titles.length;
 

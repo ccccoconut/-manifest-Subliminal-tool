@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VoiceRecorder } from "@/lib/audio/recorder";
 import { DISCLAIMER_RECORD } from "@/lib/constants";
 import type { VoiceTake } from "@/lib/types";
+import Strands from "@/components/ui/Strands";
 
 type Status = "idle" | "recording" | "recorded" | "error";
-const BAR_COUNT = 28;
 const MIN_TAKE_SEC = 3;
 
 export default function RecordStep({
@@ -14,13 +14,11 @@ export default function RecordStep({
   lines,
   initialTake,
   onDone,
-  onBack,
 }: {
   anchorLine: string;
   lines: string[];
   initialTake: VoiceTake | null;
   onDone: (take: VoiceTake) => void;
-  onBack: () => void;
 }) {
   const [status, setStatus] = useState<Status>(initialTake ? "recorded" : "idle");
   const [take, setTake] = useState<VoiceTake | null>(initialTake);
@@ -30,11 +28,6 @@ export default function RecordStep({
   const [consent, setConsent] = useState(Boolean(initialTake));
   const recRef = useRef<VoiceRecorder | null>(null);
   const rafRef = useRef<number>(0);
-
-  const offsets = useMemo(
-    () => Array.from({ length: BAR_COUNT }, () => 0.35 + Math.random() * 0.65),
-    []
-  );
 
   useEffect(() => {
     return () => {
@@ -96,7 +89,9 @@ export default function RecordStep({
   return (
     <div className="mx-auto w-full max-w-2xl">
       <div className="text-center">
-        <h2 className="text-2xl font-bold sm:text-3xl">用自己的声音，坚定地读出你的肯定语</h2>
+        <h2 className="text-xl font-bold leading-snug text-[var(--color-mist)] sm:text-2xl">
+          用自己的声音，坚定地读出肯定语
+        </h2>
       </div>
 
       {/* affirmations */}
@@ -113,32 +108,29 @@ export default function RecordStep({
         </ul>
       </div>
 
-      {/* visualizer */}
-      <div className="mt-6 flex h-20 items-center justify-center gap-[3px]">
-        {offsets.map((o, i) => {
-          const h =
-            status === "recording"
-              ? 8 + level * 60 * o * (0.7 + 0.3 * Math.sin((i / BAR_COUNT) * Math.PI))
-              : status === "recorded"
-                ? 10 + 22 * o
-                : 6;
-          return (
-            <span
-              key={i}
-              className="w-1.5 rounded-full transition-[height] duration-75"
-              style={{
-                height: `${Math.max(4, h)}px`,
-                background:
-                  status === "recording"
-                    ? "linear-gradient(180deg,#f0abfc,#a78bfa)"
-                    : "rgba(139,92,246,0.25)",
-              }}
-            />
-          );
-        })}
+      {/* visualizer — a single centered strand.
+          waviness is kept very low so the one strand stays a single centered
+          line (higher waviness makes the same strand snake up/down and read as
+          several strands). It only rises/falls with the mic level. */}
+      <div className="mt-6 h-20 w-full overflow-hidden rounded-2xl">
+        <Strands
+          colors={["#f0abfc", "#a78bfa", "#b578ee"]}
+          count={1}
+          speed={status === "recording" ? 0.6 + level * 2.0 : 0.08}
+          amplitude={status === "recording" ? 0.5 + level * 1.8 : 0.12}
+          waviness={0.28}
+          thickness={0.9}
+          glow={2.6}
+          taper={2}
+          spread={0}
+          intensity={status === "recording" ? 0.55 + level * 0.8 : 0.32}
+          saturation={1.4}
+          opacity={status === "recording" ? 1 : 0.55}
+          scale={1.4}
+        />
       </div>
 
-      <div className="text-center text-sm tabular-nums text-[var(--color-haze)]">
+      <div className="min-h-[1.25rem] text-center text-sm tabular-nums text-[var(--color-haze)]">
         {status === "recording" && (
           <span className="text-[var(--color-glow)]">● 录音中 {elapsed.toFixed(1)}s</span>
         )}
@@ -150,7 +142,6 @@ export default function RecordStep({
             )}
           </span>
         )}
-        {status === "idle" && <span>点击下方按钮开始录音</span>}
       </div>
 
       {error && <p className="mt-3 text-center text-sm text-rose-600">{error}</p>}
@@ -205,12 +196,6 @@ export default function RecordStep({
             </div>
           </div>
         )}
-        <button
-          onClick={onBack}
-          className="text-sm text-[var(--color-haze)] hover:text-[var(--color-mist)]"
-        >
-          ← 返回修改肯定语
-        </button>
       </div>
     </div>
   );

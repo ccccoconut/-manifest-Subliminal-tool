@@ -46,7 +46,7 @@ export default function GenerationOverlay({ progress }: { progress: number }) {
                     done
                       ? "bg-[var(--color-aura-deep)]/60 text-[var(--color-mist)]"
                       : active
-                        ? "bg-[var(--color-aura)] text-white shadow-[0_0_16px_rgba(167,139,250,0.6)]"
+                        ? "pill-active shadow-[0_0_16px_rgba(79,157,46,0.4)]"
                         : "bg-black/[0.05] text-[var(--color-haze)]"
                   }`}
                 >

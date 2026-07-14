@@ -1,51 +1,102 @@
-# 心声调频 InnerTune — 设计系统
+# 酥饼 — 设计系统
 
-> 由 `ui-ux-pro-max` skill 的设计系统生成器产出（query: `wellness mental-health emotional companion self-affirmation meditation calm audio`），
-> 再结合本项目「暗色 + 科幻」的既定方向人工取舍。
-> 重新生成：`python3 ~/.claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system -p "InnerTune"`
+> 面向当前 **移动端 WebView / H5** 形态的设计限定。实现见 `app/globals.css`、`app/layout.tsx`、`components/HomeDashboard.tsx`。
 
-## 一、skill 对「情绪陪伴 / 健康养护」品类的原始推荐
-| 维度 | 推荐 |
+## 一、产品形态（设计前提）
+
+| 维度 | 当前限定 |
 | --- | --- |
-| 模式 | Storytelling-Driven + Social Proof（CTA 在首屏；Hero → Features → CTA）|
-| 风格 | Neumorphism 柔性 UI（适合冥想/健康类；注意对比度偏低）|
-| 主色 | 薰衣草紫 `#8B5CF6` |
-| CTA 强调色 | 健康绿 `#059669`（已为 WCAG 3:1 调整）|
-| 背景 / 前景 | 浅色 `#FAF5FF` / 深紫 `#4C1D95`（**浅色主题**）|
-| 字体 | 标题 Lora（衬线）+ 正文 Raleway |
-| 反模式 | 风格不一致、对比度不足 |
+| 载体 | **移动端优先**：整 App 约束在 `.app-frame`（`max-width: 480px`）内；真机 WebView 全屏，桌面浏览器居中呈现「手机画框」 |
+| 信息架构 | **首页工作台** → **创作向导**（输入 → 肯定语 → 录音 → 背景音 → 调参 → 结果）→ 回到首页「我的作品」 |
+| 品牌 | **酥饼** · Tagline：「用你的声音，生成专属于你的显化 sub。」 |
+| 默认主题 | **浅色玻璃拟态**；设置面板可切换夜间模式 |
 
-## 二、本项目的取舍（暗色科幻 ≠ 浅色养护，二者都成立）
-项目已确立**暗色玻璃拟态 + 科幻 3D 背景**方向。因此**不照搬**浅色 Neumorphism 主题，
-而是采纳 skill 中**与主题无关、普适提升质量**的规则；浅色养护方案作为「可选整套换肤」备选。
+## 二、品牌色与语义 token
 
-### 已采纳并落地（与主题无关的硬规则）
-- **无 emoji 当图标**：场景选择、背景音来源的 emoji → Lucide 风格描边 SVG（`components/ui/icons.tsx`）。
-- **可见 focus 态**：全局 `:focus-visible` 紫色 ring（键盘可达性）。
-- **cursor-pointer**：所有可点击元素（按钮/滑块/勾选）显示手型。
-- **动效时长**：交互动画维持 150–300ms（既有）。
-- **reduced-motion**：尊重系统设置（音频管线已支持；科幻背景在该设置下放慢而非冻结）。
+### 三色主色（用户可见、装饰与 CTA 渐变）
 
-### 暂未采纳（与当前方向冲突，列为可选项）
-- 浅色主题 + Neumorphism（与暗色科幻冲突）。
-- 衬线标题 Lora（与科幻气质冲突；如需「更养护」气质可启用）。
-- 健康绿 CTA（当前 CTA 用品牌紫渐变；如需更强区分可引入绿色 accent）。
+| Token | 色值 | 用途 |
+| --- | --- | --- |
+| `--color-lime` | `#CEF595` | 青柠 · CTA 渐变、背景光斑、激活态 |
+| `--color-mint` | `#B1FFEC` | 薄荷 · 玻璃 tint、Liquid 背景、选中 hover |
+| `--color-cream` | `#FFE588` | 奶油 · CTA 渐变末端、暖色光斑 |
 
-## 三、若要切换为 skill 的「浅色养护」整套方案
-1. `globals.css` 用浅色 token：bg `#FAF5FF`、前景 `#4C1D95`、primary `#8B5CF6`、accent `#059669`。
-2. 引入字体：
-   ```css
-   @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap');
-   ```
-   标题 Lora、正文 Raleway。
-3. 玻璃卡 → Neumorphism 柔性阴影（`-5px -5px 15px, 5px 5px 15px`）。
-4. 关闭/弱化科幻 3D 背景（浅色下改为柔和光斑）。
+### 界面语义色（`globals.css` @theme）
 
-## 四、交付前检查（skill checklist，已对照）
-- [x] 图标用 SVG（非 emoji）
-- [x] 可点击元素 cursor-pointer
-- [x] hover/press 过渡 150–300ms
-- [x] 可见 focus 态
-- [x] 尊重 prefers-reduced-motion
-- [ ] 全量对比度 4.5:1 复核（暗色下部分次要灰字偏低，后续可再提）
-- [x] 响应式 375 / 768 / 1024 / 1440
+| Token | 浅色默认值 | 说明 |
+| --- | --- | --- |
+| `--color-ink` / `--color-ink-soft` | 浅绿白底 | 页面画布 |
+| `--color-mist` / `--color-mist-soft` | 深墨绿字 | 主文案 / 次级文案 |
+| `--color-haze` | 灰绿 | 辅助说明、占位 |
+| `--color-aura` / `--color-aura-deep` | `#4f9d2e` / `#357018` | 可读强调色（图标、focus、滑块 accent）——**不是**直接用 pastel 作实心按钮底 |
+| `--color-glow` | `#B1FFEC` | 高亮、录音状态提示 |
+| `--color-border` | 半透明墨绿 | 玻璃边框 |
+
+**禁止**：回到薰衣草紫 `#8B5CF6`、旧 teal `#0d9488` 实心主按钮、暗色科幻作为默认皮肤。
+
+## 三、视觉风格：玻璃拟态（Glassmorphism）
+
+- **背景层**：`.aurora` 三色 radial 光斑 + `LiquidBackground`（LiquidEther，颜色 `#B1FFEC` / `#CEF595` / `#FFE588`）
+- **卡片**：`.glass` — 白 + 薄荷/青柠渐变、高 blur/saturate、内高光
+- **芯片 / 次级面板**：`.glass-chip`、`.soft-panel`
+- **主按钮**：`.btn-primary` — 三色渐变 + **深墨绿字** `#123f2a`
+- **激活药丸**：`.pill-active` — 与主按钮同渐变；用于 Tab 选中、步骤条当前步、设置切换等（**禁止** pastel 底 + 白字，对比度不够）
+- **幽灵按钮**：`.btn-ghost` — 半透明白 + 细边框，hover 薄荷 tint
+
+圆角：`--radius-xl: 1.5rem`，`--radius-2xl: 2rem`。
+
+## 四、字体
+
+| 用途 | 字体 |
+| --- | --- |
+| 正文 / 标题 | **Noto Sans SC**（思源黑体，`next/font/google` 自托管）+ PingFang / 系统 sans 回退 |
+
+大标题在移动端仍可用 `text-3xl`，避免在 480px 画框内使用过大桌面字号（`text-5xl` 仅作 sm 断点增强，画框内 rarely 触发）。
+
+## 五、布局与组件约定
+
+### 首页（HomeDashboard）
+
+- 顶栏：Logo + 品牌 + **「新建」**（非「新建作品」长文案）
+- Tab：**我的作品** / **社群**（社群为占位）
+- 作品区：空状态 / **2 列**封面网格
+- 左下 **设置 FAB**：头像、昵称、日/夜切换；`fixed` 锚定 `--frame-left`，不贴 viewport 左下角
+
+### 创作向导
+
+- 各 Step 容器 `max-w-2xl` / `max-w-3xl`，在画框内自然单列
+- 录音页可视化：**仅 1 条居中 Strands 丝带**（`count=1`，低 `waviness`）；idle 静态、recording 随 mic level 起伏
+- 结果页：封面 + 内嵌播放器 + 肯定语列表；进入时 **自动保存** 到「我的作品」
+
+### 固定 UI 规则（沿用）
+
+- 图标：**SVG 描边**，不用 emoji 当功能图标
+- **cursor-pointer** 于所有可点击控件
+- **:focus-visible** 墨绿 outline
+- **prefers-reduced-motion**：aurora 动画可关闭；音频/生成进度不依赖 rAF 单线程
+- 动效：150–300ms 为主（Framer 步骤切换 ~320ms）
+
+## 六、已废弃 / 不再作为设计前提
+
+| 旧限定 | 现状 |
+| --- | --- |
+| 暗色 + 科幻 3D 默认 UI | 已改为浅色玻璃 +  pastel 流体背景 |
+| 桌面宽栏 `max-w-6xl` 首页 | 已改为移动端画框 |
+| Neumorphism 柔性阴影方案 | 未采用；以 glass 为准 |
+| 紫色 focus / 紫色 Tab 阴影 | 已统一为绿/薄荷系 |
+| 录音页多竖条 / 多条 Strands | 已改为单条居中丝带 |
+| 首页示例画廊、一键演示 Banner | 当前版本未上线 |
+| 步骤条在 Studio 顶栏常驻 | Stepper 组件存在，主流程未强制展示 |
+
+## 七、交付前检查
+
+- [x] 三色主色与 glass 组件一致
+- [x] 移动端画框 375–480px 可读
+- [x] 激活态用 `pill-active`（深字）而非 pastel 实心 + 白字
+- [x] SVG 图标、focus、cursor、reduced-motion
+- [ ] 次要灰字（`--color-haze`）全站 4.5:1 对比度复核
+- [x] WebView：`viewportFit: cover`，`maximumScale: 1`
+
+## 八、扩展换肤（若未来需要）
+
+夜间模式已通过 `:root[data-theme="dark"]` 覆盖 token；**不要**再引入第三套紫色养护主题，除非产品方向变更。

@@ -24,7 +24,7 @@ export default function Stepper({ current }: { current: WizardStep }) {
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold transition-all ${
                   active
-                    ? "bg-[var(--color-aura)] text-white shadow-[0_0_18px_rgba(167,139,250,0.6)]"
+                    ? "pill-active shadow-[0_0_18px_rgba(79,157,46,0.45)]"
                     : done
                       ? "bg-[var(--color-aura-deep)]/40 text-[var(--color-mist)]"
                       : "bg-black/[0.05] text-[var(--color-haze)]"

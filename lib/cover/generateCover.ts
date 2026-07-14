@@ -1,37 +1,129 @@
-import { APP_NAME, getSoundscape } from "../constants";
 import type { SoundscapeId } from "../types";
 
+/** 封面专用色板（与配乐配方独立，供用户左右滑动选择） */
+export type CoverPaletteId =
+  | "mint"
+  | "sunrise"
+  | "lavender"
+  | "rose"
+  | "ocean"
+  | "sand"
+  | "dusk"
+  | "forest";
+
+export interface CoverPalette {
+  id: CoverPaletteId;
+  name: string;
+  palette: [string, string, string];
+  accent: string;
+  textColor: string;
+}
+
+export const COVER_PALETTES: CoverPalette[] = [
+  {
+    id: "mint",
+    name: "薄荷青",
+    palette: ["#e8fff9", "#b1ffec", "#cef595"],
+    accent: "#2a9d8f",
+    textColor: "#123f2a",
+  },
+  {
+    id: "sunrise",
+    name: "晨曦暖",
+    palette: ["#fff4e0", "#ffe588", "#ffd4a8"],
+    accent: "#e8a020",
+    textColor: "#4a3520",
+  },
+  {
+    id: "lavender",
+    name: "薰衣草",
+    palette: ["#f3eeff", "#e4d4ff", "#d8c4f8"],
+    accent: "#8b6fc0",
+    textColor: "#3d2a5c",
+  },
+  {
+    id: "rose",
+    name: "玫瑰雾",
+    palette: ["#fff0f3", "#ffd6e0", "#ffc9d6"],
+    accent: "#d45d7a",
+    textColor: "#5c2438",
+  },
+  {
+    id: "ocean",
+    name: "海雾蓝",
+    palette: ["#e8f4ff", "#b8d9f5", "#8ec5e8"],
+    accent: "#3d7ab8",
+    textColor: "#1a3d5c",
+  },
+  {
+    id: "sand",
+    name: "暖沙米",
+    palette: ["#faf6ef", "#f0e6d6", "#e8dcc8"],
+    accent: "#b8956a",
+    textColor: "#4a3d2e",
+  },
+  {
+    id: "dusk",
+    name: "暮色紫",
+    palette: ["#f5e8ff", "#e8c4e8", "#d4a8d4"],
+    accent: "#9b5a9b",
+    textColor: "#3d2848",
+  },
+  {
+    id: "forest",
+    name: "森林绿",
+    palette: ["#e8f5e8", "#c8e6c8", "#a8d4a8"],
+    accent: "#4f9d2e",
+    textColor: "#1a3d1a",
+  },
+];
+
 export interface CoverInput {
-  title: string;
-  scene: string;
-  emotionTags: string[];
-  soundscape: SoundscapeId;
-  anchorLine?: string;
+  affirmation: string;
+  palette: CoverPaletteId;
+}
+
+export interface CoverTemplate {
+  id: CoverPaletteId;
+  name: string;
+  palette: [string, string, string];
+  accent: string;
+}
+
+export function listCoverTemplates(): CoverTemplate[] {
+  return COVER_PALETTES.map((p) => ({
+    id: p.id,
+    name: p.name,
+    palette: p.palette,
+    accent: p.accent,
+  }));
+}
+
+export function getCoverPalette(id: CoverPaletteId): CoverPalette {
+  return COVER_PALETTES.find((p) => p.id === id) ?? COVER_PALETTES[0];
+}
+
+/** 首次生成时，按配乐配方匹配默认封面色 */
+export function defaultCoverPaletteForSoundscape(
+  soundscape: SoundscapeId
+): CoverPaletteId {
+  const map: Record<SoundscapeId, CoverPaletteId> = {
+    confidence: "sunrise",
+    calm: "mint",
+    focus: "sand",
+    reset: "dusk",
+    sleep: "lavender",
+  };
+  return map[soundscape] ?? "mint";
 }
 
 const SIZE = 880;
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-function wrapTitle(
+function wrapLines(
   ctx: CanvasRenderingContext2D,
   text: string,
-  maxWidth: number
+  maxWidth: number,
+  maxLines: number
 ): string[] {
   const lines: string[] = [];
   let cur = "";
@@ -44,126 +136,81 @@ function wrapTitle(
     }
   }
   if (cur) lines.push(cur);
-  return lines.slice(0, 3);
+  if (lines.length <= maxLines) return lines;
+  const kept = lines.slice(0, maxLines);
+  const last = kept[maxLines - 1];
+  kept[maxLines - 1] =
+    last.length > 1 ? `${last.slice(0, Math.max(1, last.length - 1))}…` : "…";
+  return kept;
 }
 
-/** 生成专属封面 PNG（dataURL）。纯前端 Canvas 绘制。 */
 export function generateCover(input: CoverInput): string {
-  const meta = getSoundscape(input.soundscape);
+  const meta = getCoverPalette(input.palette);
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
 
-  // base gradient
   const grad = ctx.createLinearGradient(0, 0, SIZE, SIZE);
   grad.addColorStop(0, meta.palette[0]);
-  grad.addColorStop(0.55, meta.palette[1]);
+  grad.addColorStop(0.5, meta.palette[1]);
   grad.addColorStop(1, meta.palette[2]);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, SIZE, SIZE);
 
-  // soft glow blobs
   const blobs: [number, number, number, string][] = [
-    [SIZE * 0.2, SIZE * 0.22, SIZE * 0.4, meta.accent],
-    [SIZE * 0.82, SIZE * 0.3, SIZE * 0.34, "#ffffff"],
-    [SIZE * 0.7, SIZE * 0.85, SIZE * 0.45, meta.palette[2]],
+    [SIZE * 0.18, SIZE * 0.2, SIZE * 0.42, meta.accent],
+    [SIZE * 0.85, SIZE * 0.28, SIZE * 0.36, "#ffffff"],
+    [SIZE * 0.55, SIZE * 0.88, SIZE * 0.5, meta.palette[2]],
   ];
   for (const [x, y, r, color] of blobs) {
     const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-    rg.addColorStop(0, hexA(color, 0.45));
+    rg.addColorStop(0, hexA(color, 0.4));
     rg.addColorStop(1, hexA(color, 0));
     ctx.fillStyle = rg;
     ctx.fillRect(0, 0, SIZE, SIZE);
   }
 
-  // concentric sound ripples (lower right)
   ctx.save();
-  ctx.globalAlpha = 0.5;
-  ctx.strokeStyle = hexA("#ffffff", 0.5);
+  ctx.strokeStyle = hexA("#ffffff", 0.45);
   const cx = SIZE * 0.5;
-  const cy = SIZE * 0.62;
-  for (let i = 1; i <= 7; i++) {
+  const cy = SIZE * 0.42;
+  for (let i = 1; i <= 5; i++) {
     ctx.beginPath();
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.06 + (7 - i) * 0.02;
-    ctx.arc(cx, cy, i * 46, 0, Math.PI * 2);
+    ctx.lineWidth = 1.4;
+    ctx.globalAlpha = 0.05 + (5 - i) * 0.025;
+    ctx.arc(cx, cy, i * 52, 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.restore();
 
-  // dark vignette for text legibility
-  const vg = ctx.createLinearGradient(0, SIZE * 0.35, 0, SIZE);
-  vg.addColorStop(0, hexA("#05050c", 0));
-  vg.addColorStop(1, hexA("#05050c", 0.62));
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, SIZE, SIZE);
+  const raw = (input.affirmation || "").replace(/[「」“”《》]/g, "").trim();
+  const quote = `"${raw || "我此刻安稳地与自己同在"}"`;
 
-  // brand top
-  ctx.fillStyle = meta.accent;
-  ctx.beginPath();
-  ctx.arc(64, 70, 9, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = hexA("#ffffff", 0.92);
-  ctx.font = "600 30px " + FONT;
-  ctx.textBaseline = "middle";
-  ctx.fillText(APP_NAME, 86, 72);
+  const padX = 64;
+  const padBottom = 72;
+  const maxW = SIZE - padX * 2;
 
-  // title (wrapped)
-  const clean = input.title.replace(/[《》]/g, "");
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "700 70px " + FONT;
-  const titleLines = wrapTitle(ctx, clean, SIZE - 130);
-  let ty = SIZE * 0.5 - (titleLines.length - 1) * 44;
-  ctx.shadowColor = "rgba(0,0,0,0.35)";
-  ctx.shadowBlur = 24;
-  for (const line of titleLines) {
-    ctx.fillText(line, 64, ty);
-    ty += 88;
+  ctx.fillStyle = meta.textColor;
+  ctx.font = `600 40px ${FONT}`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "bottom";
+
+  const lines = wrapLines(ctx, quote, maxW, 4);
+  const lineH = 52;
+  let ty = SIZE - padBottom;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    ctx.shadowColor = "rgba(255,255,255,0.45)";
+    ctx.shadowBlur = 10;
+    ctx.fillText(lines[i], padX, ty);
+    ctx.shadowBlur = 0;
+    ty -= lineH;
   }
-  ctx.shadowBlur = 0;
-
-  // scene
-  ctx.fillStyle = hexA(meta.accent, 0.95);
-  ctx.font = "500 30px " + FONT;
-  ctx.fillText(input.scene, 64, ty + 4);
-
-  // anchor line（核心心声，可公开）
-  if (input.anchorLine) {
-    ctx.fillStyle = hexA("#ffffff", 0.88);
-    ctx.font = "italic 500 30px " + FONT;
-    let anchor = `“${input.anchorLine.replace(/[「」“”]/g, "")}”`;
-    while (ctx.measureText(anchor).width > SIZE - 128 && anchor.length > 8) {
-      anchor = anchor.slice(0, -2) + "…”";
-    }
-    ctx.fillText(anchor, 64, SIZE - 200);
-  }
-
-  // emotion tag pills
-  let px = 64;
-  const py = SIZE - 150;
-  ctx.font = "500 26px " + FONT;
-  for (const tag of input.emotionTags.slice(0, 4)) {
-    const w = ctx.measureText(tag).width + 40;
-    if (px + w > SIZE - 64) break;
-    ctx.fillStyle = hexA("#ffffff", 0.14);
-    roundRect(ctx, px, py, w, 50, 25);
-    ctx.fill();
-    ctx.fillStyle = hexA("#ffffff", 0.92);
-    ctx.fillText(tag, px + 20, py + 26);
-    px += w + 14;
-  }
-
-  // footer
-  ctx.fillStyle = hexA("#ffffff", 0.6);
-  ctx.font = "400 24px " + FONT;
-  ctx.fillText("AI 辅助生成 · 个人放松，非医疗或心理诊疗建议", 64, SIZE - 60);
 
   return canvas.toDataURL("image/png");
 }
 
-/** 把封面缩成小尺寸 JPEG（用于历史记录持久化，避免 localStorage 配额溢出）。 */
 export function makeThumb(dataUrl: string, size = 320): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -181,8 +228,33 @@ export function makeThumb(dataUrl: string, size = 320): Promise<string> {
   });
 }
 
+export function coverFromImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("canvas unavailable"));
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => reject(new Error("image decode failed"));
+      img.src = String(reader.result || "");
+    };
+    reader.onerror = () => reject(new Error("file read failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
 const FONT =
-  '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif';
+  '"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif';
 
 function hexA(hex: string, alpha: number): string {
   const h = hex.replace("#", "");

@@ -15,6 +15,8 @@ export interface TrackRecord {
   durationSec: number;
   ratings?: Ratings;
   createdAt: number;
+  /** 音频是否已写入 IndexedDB（旧记录可能没有） */
+  hasAudio?: boolean;
 }
 
 export function loadHistory(): TrackRecord[] {
@@ -29,30 +31,34 @@ export function loadHistory(): TrackRecord[] {
   }
 }
 
-export function saveTrack(record: TrackRecord): TrackRecord[] {
-  const list = [record, ...loadHistory().filter((r) => r.id !== record.id)].slice(
-    0,
-    MAX
-  );
+function persist(list: TrackRecord[]): TrackRecord[] {
+  const clipped = list.slice(0, MAX);
   try {
-    localStorage.setItem(KEY, JSON.stringify(list));
+    localStorage.setItem(KEY, JSON.stringify(clipped));
   } catch {
-    // 配额超限：丢弃最旧的封面再试
     try {
-      localStorage.setItem(KEY, JSON.stringify(list.slice(0, 4)));
+      localStorage.setItem(KEY, JSON.stringify(clipped.slice(0, 4)));
     } catch {
       /* give up silently */
     }
   }
-  return list;
+  return clipped;
+}
+
+export function saveTrack(record: TrackRecord): TrackRecord[] {
+  return persist([record, ...loadHistory().filter((r) => r.id !== record.id)]);
+}
+
+export function updateTrack(
+  id: string,
+  patch: Partial<Omit<TrackRecord, "id" | "createdAt">>
+): TrackRecord[] {
+  const list = loadHistory().map((r) =>
+    r.id === id ? { ...r, ...patch } : r
+  );
+  return persist(list);
 }
 
 export function deleteTrack(id: string): TrackRecord[] {
-  const list = loadHistory().filter((r) => r.id !== id);
-  try {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  } catch {
-    /* noop */
-  }
-  return list;
+  return persist(loadHistory().filter((r) => r.id !== id));
 }

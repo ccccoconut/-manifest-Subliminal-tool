@@ -1,25 +1,30 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap");
 
 @theme {
-  /* main UI: mint #B1FFEC / lime #CEF595 / cream #FFE588 + frosted glass */
-  --color-ink: #f0fbf4;
-  --color-ink-soft: #fbfff7;
-  --color-mist: #103d33;
-  --color-mist-soft: #3f6f60;
-  --color-haze: #7ba293;
-  --color-aura: #0d9488;
-  --color-aura-deep: #0f766e;
-  --color-glow: #b1ffec;
-  --color-calm: #65a30d;
-  --color-accent: #65a30d;
-  --color-border: rgba(16, 61, 51, 0.12);
-  --color-muted: rgba(16, 61, 51, 0.05);
+  /* Brand palette — three signature pastels, glassmorphism-first */
+  --color-lime: #cef595;
+  --color-mint: #b1ffec;
+  --color-cream: #ffe588;
 
-  --font-sans: "Raleway", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Lora", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    Georgia, serif;
+  /* light UI: pastel-tinted frosted glass on a soft lime-mint canvas */
+  --color-ink: #eefcf1;
+  --color-ink-soft: #f8fff6;
+  --color-mist: #123f2a;
+  --color-mist-soft: #3d6b52;
+  --color-haze: #7aa38c;
+  /* readable accent within the lime family (for icons / rings / thumbs) */
+  --color-aura: #4f9d2e;
+  --color-aura-deep: #357018;
+  --color-glow: #b1ffec;
+  --color-calm: #cef595;
+  --color-accent: #ffe588;
+  --color-border: rgba(18, 63, 42, 0.12);
+  --color-muted: rgba(18, 63, 42, 0.05);
+
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+    "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+    "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
 
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
@@ -31,17 +36,17 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-ink: #10231f;
-  --color-ink-soft: #17312b;
+  --color-ink: #0f231d;
+  --color-ink-soft: #163029;
   --color-mist: #f4fff9;
-  --color-mist-soft: #c1ddd5;
+  --color-mist-soft: #c6e3d6;
   --color-haze: #8caea4;
-  --color-aura: #b1ffec;
-  --color-aura-deep: #42cdb7;
-  --color-glow: #cef595;
+  --color-aura: #a7e86f;
+  --color-aura-deep: #86d9c6;
+  --color-glow: #b1ffec;
   --color-calm: #cef595;
   --color-accent: #ffe588;
-  --color-border: rgba(177, 255, 236, 0.18);
+  --color-border: rgba(177, 255, 236, 0.2);
   --color-muted: rgba(255, 255, 255, 0.08);
 }
 
@@ -53,7 +58,9 @@ body {
   background: var(--color-ink);
   color: var(--color-mist);
   font-family: var(--font-sans);
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition: background 0.25s ease, color 0.25s ease;
 }
@@ -62,12 +69,79 @@ body {
   box-sizing: border-box;
 }
 
+/* Mobile frame: constrain the whole app to a phone-width column.
+   In a real device WebView this simply fills the screen; on desktop it
+   renders like a centered phone. */
+.app-frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
+  min-height: 100dvh;
+  /* CSS var the fixed UI (settings FAB, etc.) can use to pin to the frame */
+  --frame-max: 480px;
+  --frame-left: max(0px, calc(50vw - var(--frame-max) / 2));
+}
+
+/* On viewports wider than the frame, hint a phone silhouette. */
+@media (min-width: 481px) {
+  .app-frame {
+    box-shadow:
+      0 0 0 1px var(--color-border),
+      0 40px 90px -40px rgba(16, 61, 51, 0.4);
+  }
+}
+
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  letter-spacing: 0;
-  line-height: 1.18;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.22;
+}
+
+/* Fixed top brand row — icon left, name + tagline on its right */
+.app-topbar {
+  min-height: 5.25rem;
+}
+
+.app-topbar-icon {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 1rem;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.app-topbar-brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.app-topbar-brand p {
+  margin: 0;
+}
+
+.app-topbar-brand p:first-child {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.app-topbar-brand p:last-child {
+  margin-top: 1px;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.app-topbar-back-slot {
+  height: 18px;
+  font-size: 11px;
+  line-height: 18px;
 }
 
 .aurora {
@@ -75,10 +149,14 @@ h3 {
   inset: 0;
   z-index: -2;
   overflow: hidden;
+  /* Pale, airy canvas: soft pastel foliage at the corners + a bright vertical
+     light column down the middle, so frosted glass reads as truly translucent. */
   background:
-    radial-gradient(60% 50% at 14% 8%, rgba(177, 255, 236, 0.6), transparent 70%),
-    radial-gradient(55% 50% at 88% 14%, rgba(255, 229, 136, 0.5), transparent 70%),
-    radial-gradient(70% 62% at 50% 102%, rgba(206, 245, 149, 0.55), transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 45%),
+    radial-gradient(46% 60% at 50% 30%, rgba(255, 255, 255, 0.55), transparent 70%),
+    radial-gradient(50% 46% at 8% 4%, rgba(177, 255, 236, 0.5), transparent 68%),
+    radial-gradient(46% 44% at 94% 10%, rgba(255, 229, 136, 0.42), transparent 68%),
+    radial-gradient(60% 56% at 50% 106%, rgba(206, 245, 149, 0.48), transparent 72%),
     var(--color-ink);
 }
 
@@ -87,9 +165,10 @@ h3 {
   position: absolute;
   inset: -30%;
   background:
-    radial-gradient(34% 34% at 30% 38%, rgba(177, 255, 236, 0.5), transparent 60%),
-    radial-gradient(30% 30% at 72% 62%, rgba(255, 229, 136, 0.4), transparent 60%);
-  filter: blur(80px);
+    radial-gradient(30% 30% at 24% 34%, rgba(177, 255, 236, 0.42), transparent 62%),
+    radial-gradient(26% 26% at 76% 62%, rgba(255, 229, 136, 0.34), transparent 62%),
+    radial-gradient(28% 28% at 52% 90%, rgba(206, 245, 149, 0.36), transparent 64%);
+  filter: blur(90px);
   animation: drift 32s ease-in-out infinite alternate;
 }
 
@@ -98,10 +177,10 @@ h3 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: linear-gradient(rgba(32, 60, 53, 0.035) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(32, 60, 53, 0.03) 1px, transparent 1px);
   background-size: 100% 3px;
   mix-blend-mode: multiply;
-  opacity: 0.18;
+  opacity: 0.1;
 }
 
 @keyframes drift {
@@ -113,52 +192,76 @@ h3 {
   }
 }
 
+/* Airy frosted glass: near-white, highly translucent, hairline border,
+   soft diffuse shadow — lets the pastel canvas glow through. */
 .glass {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(177, 255, 236, 0.2)),
-    rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0.32) 55%,
+      rgba(206, 245, 149, 0.12)
+    );
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(30px) saturate(135%);
+  -webkit-backdrop-filter: blur(30px) saturate(135%);
   box-shadow:
-    0 24px 60px -28px rgba(16, 61, 51, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 30px 70px -40px rgba(18, 63, 42, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
 :root[data-theme="dark"] .glass {
   background:
-    linear-gradient(145deg, rgba(27, 54, 48, 0.84), rgba(20, 42, 38, 0.62)),
-    rgba(14, 32, 29, 0.76);
-  border-color: rgba(177, 255, 236, 0.2);
+    linear-gradient(160deg, rgba(34, 60, 54, 0.5), rgba(20, 42, 38, 0.34)),
+    rgba(14, 32, 29, 0.28);
+  border-color: rgba(177, 255, 236, 0.16);
   box-shadow:
-    0 28px 80px -48px rgba(0, 0, 0, 0.78),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 30px 80px -46px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Nested translucent panel — the "double frame" seen in the reference:
+   a fainter inner surface with its own hairline outline. */
+.glass-inset {
+  background: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme="dark"] .glass-inset {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(177, 255, 236, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-chip,
 .soft-panel {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
   transition: all 0.2s ease;
 }
 
 :root[data-theme="dark"] .glass-chip,
 :root[data-theme="dark"] .soft-panel {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(177, 255, 236, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(177, 255, 236, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-chip:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.72);
-  border-color: rgba(13, 148, 136, 0.4);
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(79, 157, 46, 0.38);
 }
 
 .text-gradient {
-  background: linear-gradient(120deg, #0d9488 0%, #10b981 45%, #65a30d 110%);
+  background: linear-gradient(120deg, #357018 0%, #4f9d2e 40%, #2fae8f 110%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -166,16 +269,24 @@ h3 {
 
 .btn-primary {
   background: linear-gradient(120deg, #b1ffec, #cef595 55%, #ffe588);
-  color: #0f3d33;
+  color: #123f2a;
   font-weight: 600;
-  box-shadow: 0 12px 30px -12px rgba(13, 148, 136, 0.45);
+  box-shadow: 0 12px 30px -12px rgba(79, 157, 46, 0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 18px 40px -14px rgba(13, 148, 136, 0.55);
+  box-shadow: 0 18px 40px -14px rgba(79, 157, 46, 0.6);
   filter: brightness(1.03) saturate(1.05);
+}
+
+/* Filled/active pill — pastel gradient with dark ink text (glassy, high-contrast).
+   Use where solid accent fills previously carried white text. */
+.pill-active {
+  background: linear-gradient(120deg, #b1ffec, #cef595 55%, #ffe588);
+  color: #123f2a;
+  box-shadow: 0 10px 26px -16px rgba(79, 157, 46, 0.75);
 }
 
 .btn-primary:disabled {
@@ -200,7 +311,7 @@ h3 {
 }
 
 .btn-ghost:hover:not(:disabled) {
-  border-color: rgba(13, 148, 136, 0.5);
+  border-color: rgba(79, 157, 46, 0.5);
   color: var(--color-mist);
   background: rgba(177, 255, 236, 0.4);
 }
@@ -248,18 +359,12 @@ input[type="range"] {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(13, 148, 136, 0.3);
+  background: rgba(79, 157, 46, 0.3);
   border-radius: 999px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .aurora::before {
     animation: none;
-  }
-}
-
-@media (min-width: 1024px) and (max-height: 780px) {
-  .home-dashboard {
-    zoom: 0.88;
   }
 }

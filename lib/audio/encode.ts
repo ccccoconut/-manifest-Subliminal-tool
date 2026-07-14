@@ -32,10 +32,10 @@ export function audioBufferToMp3(buffer: AudioBuffer, kbps = 160): Blob {
     const r = right.subarray(i, i + blockSize);
     const chunk =
       channels > 1 ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
-    if (chunk.length > 0) data.push(new Uint8Array(chunk));
+    if (chunk && chunk.length > 0) data.push(new Uint8Array(chunk));
   }
   const end = encoder.flush();
-  if (end.length > 0) data.push(new Uint8Array(end));
+  if (end && end.length > 0) data.push(new Uint8Array(end));
 
   return new Blob(data as BlobPart[], { type: "audio/mpeg" });
 }

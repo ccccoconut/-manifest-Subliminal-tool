@@ -5,7 +5,7 @@ import {
 } from "../constants";
 import type { DistanceKey, MixParams } from "../types";
 import { createReverbIR } from "./noise";
-import { buildSoundscape } from "./soundscapes";
+import { attachBaseHzTone, buildSoundscape } from "./soundscapes";
 
 const REVERB_WET: Record<DistanceKey, number> = {
   near: 0.12,
@@ -14,6 +14,8 @@ const REVERB_WET: Record<DistanceKey, number> = {
 };
 
 const VOICE_START = 2.6;
+const VOICE_SPEED_MIN = 1;
+const VOICE_SPEED_MAX = 5;
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
@@ -64,18 +66,21 @@ export async function renderMix({
   const voiceBuf = await decodeAudio(voiceBlob);
 
   let bgBuf: AudioBuffer | null = null;
-  if (params.bgSource === "upload" && bgBlob) {
+  if (params.bgSource === "upload") {
+    if (!bgBlob) {
+      throw new Error("未选择背景音频文件");
+    }
     try {
       bgBuf = await decodeAudio(bgBlob);
     } catch {
-      bgBuf = null;
+      throw new Error("背景音频解码失败，请换 mp3 / wav / m4a 等格式后重试");
     }
   }
   onProgress?.(0.2);
 
   const isPreview = !!previewSeconds;
   const vStart = isPreview ? 1.0 : VOICE_START;
-  const speed = clamp(params.voiceSpeed, 1, 2);
+  const speed = clamp(params.voiceSpeed, VOICE_SPEED_MIN, VOICE_SPEED_MAX);
 
   // 总时长：预览取 previewSeconds；否则用 totalDuration（上限 30min）
   const duration = isPreview
@@ -123,7 +128,7 @@ export async function renderMix({
     }
 
     if (params.bgSource === "recipe") {
-      buildSoundscape(offline, bgVol, {
+      const built = buildSoundscape(offline, bgVol, {
         meta: getSoundscape(params.soundscape),
         mood: params.mood,
         rhythm: params.rhythm,
@@ -132,21 +137,15 @@ export async function renderMix({
         baseGain: 1,
         fadeOut: true,
       });
-      // 赫兹基准频率：叠一层柔和正弦（AI 定制纯音乐特性）
-      if (params.baseHz > 0) {
-        const o = offline.createOscillator();
-        o.type = "sine";
-        o.frequency.value = params.baseHz;
-        const g = offline.createGain();
-        g.gain.setValueAtTime(0.0001, 0);
-        g.gain.linearRampToValueAtTime(0.06, 2.5);
-        g.gain.setValueAtTime(0.06, Math.max(2.6, duration - 3));
-        g.gain.linearRampToValueAtTime(0.0001, duration);
-        o.connect(g);
-        g.connect(bgVol);
-        o.start(0);
-        o.stop(duration);
-      }
+      // 赫兹基准频率：叠一层可感知的基准音色（与试听一致）
+      attachBaseHzTone(
+        offline,
+        bgVol,
+        params.baseHz,
+        0,
+        duration,
+        built.sources
+      );
     } else if (bgBuf) {
       const src = offline.createBufferSource();
       src.buffer = bgBuf;
@@ -199,7 +198,7 @@ export async function renderMix({
   wetGain.connect(bus);
 
   const vol = clamp(params.voiceVolume, 0, 1.2);
-  const layers = isPreview ? 1 : 1 + clamp(Math.round(params.overlayTracks), 0, 3);
+  const layers = 1 + clamp(Math.round(params.overlayTracks), 0, 3);
   const stagger = clamp(params.stagger, 0, 2);
   const voiceEnd = duration - 0.6;
 

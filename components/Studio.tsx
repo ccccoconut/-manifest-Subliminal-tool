@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ComplianceBar from "@/components/ui/ComplianceBar";
+import AppTopBar from "@/components/ui/AppTopBar";
 import SafetyModal, { type SafetyData } from "@/components/ui/SafetyModal";
-import HistoryGallery from "@/components/ui/HistoryGallery";
 import GenerationOverlay from "@/components/ui/GenerationOverlay";
 import HomeDashboard, {
   type ThemeMode,
@@ -16,15 +16,21 @@ import RecordStep from "@/components/steps/RecordStep";
 import BackgroundStep from "@/components/steps/SoundscapeStep";
 import MixConsoleStep from "@/components/steps/MixConsoleStep";
 import ResultStep from "@/components/steps/ResultStep";
-import { APP_NAME, APP_TAGLINE, DEFAULT_RECIPE_DURATION, MAX_TOTAL_DURATION } from "@/lib/constants";
+import { APP_NAME, DEFAULT_RECIPE_DURATION, MAX_TOTAL_DURATION, RECIPE_VOICE, resolveSoundscapeId } from "@/lib/constants";
 import { generateFallback } from "@/lib/affirmation/fallback";
 import { renderMix } from "@/lib/audio/mixer";
 import { encodeTrack, type EncodedAudio } from "@/lib/audio/encode";
-import { generateCover, makeThumb } from "@/lib/cover/generateCover";
+import {
+  defaultCoverPaletteForSoundscape,
+  generateCover,
+  makeThumb,
+} from "@/lib/cover/generateCover";
+import { deleteTrackAudio, putTrackAudio } from "@/lib/audio/store";
 import {
   deleteTrack,
   loadHistory,
   saveTrack,
+  updateTrack,
   type TrackRecord,
 } from "@/lib/history";
 import type {
@@ -49,16 +55,14 @@ const THEME_KEY = "innertune.theme.v1";
 const DEFAULT_PROFILE: UserProfile = { nickname: "我的心声", avatarDataUrl: "" };
 
 function defaultParams(aff: Affirmation): MixParams {
-  const lively =
-    aff.mood === "bright" ||
-    aff.suggestedSoundscape === "confidence" ||
-    aff.suggestedSoundscape === "reset";
+  const soundscape = resolveSoundscapeId(aff.suggestedSoundscape);
+  const voice = RECIPE_VOICE[soundscape];
   return {
     bgSource: "recipe",
-    soundscape: aff.suggestedSoundscape,
-    mood: aff.mood,
-    rhythm: lively ? "light" : "none",
-    baseHz: 0,
+    soundscape,
+    mood: voice.mood,
+    rhythm: voice.rhythm,
+    baseHz: 432,
     bgVolume: 0.95,
     voiceVolume: 0.6, // 潜听：被背景音覆盖
     voiceSpeed: 1.0,
@@ -121,7 +125,6 @@ export default function Studio() {
   const [safety, setSafety] = useState<SafetyData | null>(null);
   const [saved, setSaved] = useState(false);
   const [history, setHistory] = useState<TrackRecord[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [theme, setTheme] = useState<ThemeMode>("light");
@@ -252,11 +255,8 @@ export default function Studio() {
       // 阶段 4：封面
       await ramp(0.9, 0.98, 400, setProgress);
       const coverDataUrl = generateCover({
-        title: affirmation.title,
-        scene: affirmation.scene,
-        emotionTags: affirmation.emotionTags,
-        soundscape: params.soundscape,
-        anchorLine: affirmation.anchorLine,
+        affirmation: affirmation.anchorLine || affirmation.lines[0] || "",
+        palette: defaultCoverPaletteForSoundscape(params.soundscape),
       });
       setProgress(1);
       const t: Track = {
@@ -273,13 +273,21 @@ export default function Studio() {
         durationSec,
         createdAt: Date.now(),
       };
+      // 音频写入 IndexedDB，作品库才能回放
+      try {
+        await putTrackAudio(t.id, enc.blob);
+      } catch (err) {
+        console.warn("audio persist failed", err);
+      }
       setEncoded(enc);
       setTrack(t);
       setSaved(false);
       setStep("result");
     } catch (err) {
       console.error(err);
-      alert("混音生成失败，请重试或重新录音。");
+      const msg =
+        err instanceof Error ? err.message : "混音生成失败，请重试或重新录音。";
+      alert(msg);
     } finally {
       setGenMix(false);
     }
@@ -287,8 +295,24 @@ export default function Studio() {
 
   const handleRenameTrack = useCallback((title: string) => {
     setTrack((t) => (t ? { ...t, title } : t));
-    setSaved(false);
-  }, []);
+    setHistory((prev) => {
+      if (!prev.some((r) => r.id === (track?.id ?? ""))) return prev;
+      return updateTrack(track!.id, { title });
+    });
+  }, [track]);
+
+  const handleCoverChange = useCallback(
+    async (coverDataUrl: string) => {
+      setTrack((t) => (t ? { ...t, coverDataUrl } : t));
+      if (!track) return;
+      const thumb = await makeThumb(coverDataUrl);
+      setHistory((prev) => {
+        if (!prev.some((r) => r.id === track.id)) return prev;
+        return updateTrack(track.id, { coverDataUrl: thumb });
+      });
+    },
+    [track]
+  );
 
   const handleSave = useCallback(async () => {
     if (!track) return;
@@ -307,25 +331,37 @@ export default function Studio() {
       durationSec: track.durationSec,
       ratings: track.ratings,
       createdAt: track.createdAt,
+      hasAudio: true,
     };
     setHistory(saveTrack(record));
   }, [saved, track]);
+
+  const handleHistorySave = useCallback(
+    async (id: string, data: { title: string; coverDataUrl: string }) => {
+      setHistory(updateTrack(id, { title: data.title, coverDataUrl: data.coverDataUrl }));
+      setTrack((t) =>
+        t && t.id === id ? { ...t, title: data.title, coverDataUrl: data.coverDataUrl } : t
+      );
+    },
+    []
+  );
+
+  const handleHistoryDelete = useCallback(async (id: string) => {
+    setHistory(deleteTrack(id));
+    try {
+      await deleteTrackAudio(id);
+    } catch {
+      /* noop */
+    }
+  }, []);
 
   const handleDownloadAudio = () => {
     if (!encoded || !track) return;
     downloadBlob(encoded.blob, `${sanitize(track.title)}.${encoded.ext}`);
   };
 
-  const handleDownloadCover = () => {
-    if (!track) return;
-    fetch(track.coverDataUrl)
-      .then((r) => r.blob())
-      .then((b) => downloadBlob(b, `${sanitize(track.title)}-封面.png`));
-  };
-
   const handleShare = async () => {
     if (!track) return;
-    // 仅分享封面声景卡片（不含本人声音音频），与「分享声景卡片」的承诺一致
     try {
       const blob = await (await fetch(track.coverDataUrl)).blob();
       const file = new File([blob], `${sanitize(track.title)}-声景卡片.png`, {
@@ -342,10 +378,10 @@ export default function Studio() {
         });
         return;
       }
+      downloadBlob(blob, `${sanitize(track.title)}-声景卡片.png`);
     } catch {
       /* user cancelled or unsupported */
     }
-    handleDownloadCover();
   };
 
   const restart = () => {
@@ -376,36 +412,38 @@ export default function Studio() {
     setStep("input");
   };
 
+  const wizardBack =
+    step === "input"
+      ? { label: "返回首页", action: restart }
+      : step === "affirmation"
+        ? { label: "返回", action: () => setStep("input") }
+        : step === "record"
+          ? { label: "返回修改肯定语", action: () => setStep("affirmation") }
+          : step === "background"
+            ? { label: "返回重录", action: () => setStep("record") }
+            : step === "mixconsole"
+              ? { label: "返回背景音", action: () => setStep("background") }
+              : step === "result"
+                ? { label: "返回首页", action: restart }
+                : null;
+
   return (
     <main className="relative flex min-h-screen flex-col">
       {step !== "home" && (
-      <header className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
-        <button
-          onClick={restart}
-          className="flex items-center gap-2 text-left text-[var(--color-mist)]"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/50 text-sm font-semibold text-[var(--color-aura-deep)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ring-1 ring-white/70">
-            In
-          </span>
-          <span>
-            <span className="block text-sm font-semibold">{APP_NAME}</span>
-            <span className="block text-[11px] text-[var(--color-haze)]">
-              {APP_TAGLINE}
-            </span>
-          </span>
-        </button>
-        {mounted && history.length > 0 && step === "input" && (
-          <button
-            onClick={() => setShowHistory(true)}
-            className="btn-ghost rounded-full px-3 py-1.5 text-xs"
-          >
-            我的音轨 {history.length}
-          </button>
-        )}
-      </header>
+        <AppTopBar
+          icon="In"
+          onIconClick={restart}
+          iconAriaLabel="返回首页"
+          backLabel={wizardBack?.label}
+          onBack={wizardBack?.action}
+        />
       )}
 
-      <section className={`flex flex-1 items-center justify-center ${step === "home" ? "" : "px-4 py-8"}`}>
+      <section
+        className={`flex flex-1 ${
+          step === "home" ? "" : "items-start justify-center px-4 pb-8 pt-1"
+        }`}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -424,6 +462,8 @@ export default function Studio() {
                 onCreate={startCreate}
                 onProfileChange={updateProfile}
                 onThemeChange={setTheme}
+                onSaveWork={handleHistorySave}
+                onDeleteWork={handleHistoryDelete}
               />
             )}
             {step === "input" && (
@@ -437,16 +477,19 @@ export default function Studio() {
               <AffirmationStep
                 affirmation={affirmation}
                 regenerating={genAff}
-                onLinesChange={(lines) => setAffirmation({ ...affirmation, lines })}
-                onAnchorChange={(anchorLine) => {
-                  const nextLines = affirmation.lines.length
-                    ? affirmation.lines
-                    : [anchorLine];
-                  setAffirmation({ ...affirmation, anchorLine, lines: nextLines });
-                }}
+                onLinesChange={(lines) =>
+                  setAffirmation((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          lines,
+                          anchorLine: lines[0] ?? prev.anchorLine,
+                        }
+                      : prev
+                  )
+                }
                 onRegenerate={handleRegenerate}
                 onNext={() => setStep("record")}
-                onBack={() => setStep("input")}
               />
             )}
             {step === "record" && affirmation && (
@@ -455,7 +498,6 @@ export default function Studio() {
                 lines={affirmation.lines}
                 initialTake={voiceTake}
                 onDone={handleRecordDone}
-                onBack={() => setStep("affirmation")}
               />
             )}
             {step === "background" && params && (
@@ -465,19 +507,22 @@ export default function Studio() {
                 bgAudio={bgAudio}
                 onBgAudioChange={(a) => {
                   setBgAudio(a);
-                  // 上传音频时，默认总时长 = 该音频时长（上限 30min）
                   if (a && a.durationSec > 0) {
-                    setParams({
-                      ...params,
-                      totalDuration: Math.min(
-                        MAX_TOTAL_DURATION,
-                        Math.round(a.durationSec)
-                      ),
-                    });
+                    setParams((p) =>
+                      p
+                        ? {
+                            ...p,
+                            bgSource: "upload",
+                            totalDuration: Math.min(
+                              MAX_TOTAL_DURATION,
+                              Math.round(a.durationSec)
+                            ),
+                          }
+                        : p
+                    );
                   }
                 }}
                 onNext={() => setStep("mixconsole")}
-                onBack={() => setStep("record")}
               />
             )}
             {step === "mixconsole" && params && voiceTake && (
@@ -487,7 +532,6 @@ export default function Studio() {
                 voiceBlob={voiceTake.blob}
                 bgAudio={bgAudio}
                 onGenerate={() => handleGenerateTrack(voiceTake)}
-                onBack={() => setStep("background")}
                 generating={genMix}
               />
             )}
@@ -496,10 +540,10 @@ export default function Studio() {
                 track={track}
                 onSave={handleSave}
                 onDownloadAudio={handleDownloadAudio}
-                onDownloadCover={handleDownloadCover}
                 onShare={handleShare}
                 onRestart={restart}
                 onRename={handleRenameTrack}
+                onCoverChange={handleCoverChange}
               />
             )}
           </motion.div>
@@ -520,13 +564,6 @@ export default function Studio() {
         />
       )}
 
-      {showHistory && (
-        <HistoryGallery
-          records={history}
-          onDelete={(id) => setHistory(deleteTrack(id))}
-          onClose={() => setShowHistory(false)}
-        />
-      )}
     </main>
   );
 }

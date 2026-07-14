@@ -42,8 +42,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "面试 / 考试 / 汇报前",
     design: "稳定节奏 · 温暖和声 · 人声更清晰",
     blurb: "明亮坚定的挂留和弦与轻微脉冲，给你向前的底气。",
-    palette: ["#1f5f52", "#2ebfa7", "#b1ffec"],
-    accent: "#2ebfa7",
+    palette: ["#e8fbc4", "#cef595", "#b1ffec"],
+    accent: "#4f9d2e",
     audio: {
       rootFreq: 164.81,
       chord: [0, 5, 7, 12],
@@ -58,17 +58,18 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     id: "calm",
     name: "放松",
     en: "Calm",
-    scene: "焦虑后 / 需要喘口气",
-    design: "慢速氛围 · 轻柔和声 · 人声更柔和",
+    scene: "焦虑后 / 睡前 / 需要喘口气",
+    design: "慢速氛围 · 轻柔和声 · 低沉暖垫",
     blurb: "饱满温暖的小七和弦，像被轻轻抱住。",
-    palette: ["#dffcf2", "#b1ffec", "#7bdcc8"],
-    accent: "#7bdcc8",
+    palette: ["#e8fff9", "#b1ffec", "#cef595"],
+    accent: "#2a9d8f",
     audio: {
-      rootFreq: 146.83,
-      chord: [0, 3, 7, 10],
-      brightness: 1020,
-      tempo: 56,
-      noiseType: "brown",
+      // 并入原「安睡」的低沉暖垫与粉噪气声，睡前场景也走放松
+      rootFreq: 138.59,
+      chord: [0, 3, 7, 10, 14],
+      brightness: 880,
+      tempo: 52,
+      noiseType: "pink",
       noiseLevel: 0.05,
       padLevel: 0.17,
     },
@@ -80,8 +81,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "学习 / 工作前",
     design: "低干扰节拍 · 简洁旋律 · 减少歌词感",
     blurb: "均匀的白噪与开放五度，帮你进入稳定的专注。",
-    palette: ["#eaf8d0", "#cef595", "#92c95b"],
-    accent: "#9acb55",
+    palette: ["#f4ffe0", "#cef595", "#ffe588"],
+    accent: "#4f9d2e",
     audio: {
       rootFreq: 196.0,
       chord: [0, 7, 12],
@@ -99,8 +100,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "情绪低落 / 内耗后",
     design: "由低到高的情绪递进 · 呼吸般的起伏",
     blurb: "通透的大调与晨雾般的空气感，带来轻盈的重新开始。",
-    palette: ["#fff7d9", "#ffe588", "#f5c95c"],
-    accent: "#f5c95c",
+    palette: ["#fff8e0", "#ffe588", "#cef595"],
+    accent: "#c9a227",
     audio: {
       rootFreq: 174.61,
       chord: [0, 4, 7, 14],
@@ -118,8 +119,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     scene: "睡前放松",
     design: "低沉暖垫 · 极轻气声 · 慢呼吸",
     blurb: "低沉温柔的暖垫与极轻气声，帮助身体慢下来。",
-    palette: ["#15332e", "#295e54", "#b1ffec"],
-    accent: "#b1ffec",
+    palette: ["#e6fff8", "#b1ffec", "#e8fbc4"],
+    accent: "#3d8b7a",
     audio: {
       rootFreq: 130.81,
       chord: [0, 3, 7, 14],
@@ -132,9 +133,39 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
   },
 ];
 
-export function getSoundscape(id: SoundscapeId): SoundscapeMeta {
-  return SOUNDSCAPES.find((s) => s.id === id) ?? SOUNDSCAPES[0];
+/** UI 可选配方（不含安睡；安睡模板已并入「放松」） */
+export const SOUNDSCAPE_PICKER_IDS: SoundscapeId[] = [
+  "confidence",
+  "calm",
+  "focus",
+  "reset",
+];
+
+export const SOUNDSCAPE_PICKER: SoundscapeMeta[] = SOUNDSCAPE_PICKER_IDS.map(
+  (id) => SOUNDSCAPES.find((s) => s.id === id)!
+);
+
+/** 将已下线的「安睡」映射到「放松」，保留其余 id */
+export function resolveSoundscapeId(id: SoundscapeId): SoundscapeId {
+  return id === "sleep" ? "calm" : id;
 }
+
+export function getSoundscape(id: SoundscapeId): SoundscapeMeta {
+  const resolved = resolveSoundscapeId(id);
+  return SOUNDSCAPES.find((s) => s.id === resolved) ?? SOUNDSCAPES[0];
+}
+
+/** 每个配方自带的氛围/节奏（UI 不再单独选择） */
+export const RECIPE_VOICE: Record<
+  SoundscapeId,
+  { mood: MoodKey; rhythm: RhythmKey }
+> = {
+  confidence: { mood: "firm", rhythm: "light" },
+  calm: { mood: "gentle", rhythm: "none" },
+  focus: { mood: "firm", rhythm: "light" },
+  reset: { mood: "bright", rhythm: "light" },
+  sleep: { mood: "gentle", rhythm: "none" }, // 兼容旧数据 → 实际走 calm
+};
 
 // ---------------- 场景 ----------------
 export interface SceneMeta {
@@ -197,9 +228,9 @@ export interface BgSourceMeta {
 }
 
 export const BG_SOURCES: BgSourceMeta[] = [
-  { key: "recipe", label: "AI 定制纯音乐", emoji: "🎼", hint: "" },
+  { key: "recipe", label: "AI生成纯音乐", emoji: "🎼", hint: "4 种氛围配方，可试听" },
   { key: "upload", label: "上传本地音频", emoji: "📁", hint: "" },
-  { key: "qqmusic", label: "从 QQ 音乐选择", emoji: "🎵", hint: "" },
+  { key: "qqmusic", label: "官方音乐平台(暂未连接)", emoji: "🎵", hint: "" },
 ];
 
 /** QQ 音乐接入前的曲库候选展示数据 */
@@ -218,11 +249,11 @@ export interface BaseHzOption {
 }
 
 export const BASE_HZ_OPTIONS: BaseHzOption[] = [
-  { hz: 432, label: "432Hz", desc: "整体略低，听感更暖、更松弛" },
-  { hz: 528, label: "528Hz", desc: "中高频更突出，听感更亮、更展开" },
-  { hz: 639, label: "639Hz", desc: "靠近人声中区，听感更贴近、更温和" },
-  { hz: 741, label: "741Hz", desc: "高频存在感更强，听感更清晰、更轻盈" },
-  { hz: 852, label: "852Hz", desc: "更偏高频空气感，听感更空灵、更远" },
+  { hz: 432, label: "432Hz", desc: "偏低暖垫，听感更松弛" },
+  { hz: 528, label: "528Hz", desc: "中频更亮，听感更展开" },
+  { hz: 639, label: "639Hz", desc: "贴近人声区，听感更温和" },
+  { hz: 741, label: "741Hz", desc: "高频更清晰，听感更轻盈" },
+  { hz: 852, label: "852Hz", desc: "空气感更强，听感更空灵" },
 ];
 
 // ---------------- 情绪评分维度 ----------------
@@ -282,6 +313,6 @@ export const DEFAULT_RECIPE_DURATION = 180; // AI 配乐无固定长度时的默
 
 // ---------------- 合规文案 ----------------
 export const DISCLAIMER_AUDIO =
-  "本音频由 AI 辅助生成，用于日常情绪陪伴和自我表达，不构成心理咨询、医疗诊断或治疗建议。";
+  "仅用于日常情绪陪伴，不构成心理咨询、医疗诊断或治疗建议。";
 export const DISCLAIMER_VOICE = "本功能仅支持使用本人声音或已获明确授权的声音素材。";
 export const DISCLAIMER_RECORD = "我确认本段录音为本人声音，我允许使用生成本次音频。";

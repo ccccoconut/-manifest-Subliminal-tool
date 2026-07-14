@@ -36,7 +36,7 @@ export interface Affirmation {
   anchorLine: string; // 核心心声：最适合朗读、最打动人的一句
   suggestedSoundscape: SoundscapeId;
   mood: MoodKey;
-  source: "deepseek" | "fallback";
+  source: "agent" | "deepseek" | "fallback";
 }
 
 /** 音轨混音参数（STEP 4 背景音 + STEP 5 调参台） */
@@ -52,7 +52,7 @@ export interface MixParams {
   bgVolume: number; // 0..1
   // 人声素材
   voiceVolume: number; // 0..1（潜听，被背景音覆盖）
-  voiceSpeed: number; // 速度 1.0..2.0（playbackRate）
+  voiceSpeed: number; // 速度 1.0..5.0（playbackRate）
   overlayTracks: number; // 叠加音轨 0..3
   stagger: number; // 音轨交错 0..2 秒
   // 合成效果

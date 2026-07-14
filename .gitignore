@@ -14,6 +14,8 @@
 # misc
 .DS_Store
 *.pem
+.playwright-cli/
+/output/
 
 # debug
 npm-debug.log*
