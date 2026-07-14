@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import type { SceneKey, ToneKey, UserInput } from "@/lib/types";
 import { runAffirmationAgent } from "@/lib/affirmation/agent";
+import { generateFallback } from "@/lib/affirmation/fallback";
 import { checkSafety, CRISIS_RESOURCES } from "@/lib/safety";
+import { DEVICE_HEADER } from "@/lib/quota/constants";
+import { reserveAiCall } from "@/lib/quota/store";
 
 export const runtime = "nodejs";
 
@@ -37,6 +40,43 @@ export async function POST(req: Request) {
     });
   }
 
+  const deviceId = req.headers.get(DEVICE_HEADER);
+  const reserved = reserveAiCall(deviceId);
+
+  // 今日作品额度已用尽：不再调用 DeepSeek
+  if (!reserved.ok && reserved.error === "QUOTA_TRACK") {
+    return NextResponse.json(
+      {
+        error: "QUOTA_TRACK",
+        message: "今日制作次数已用完，请明天再试。删除作品不会返还次数。",
+        quota: reserved.snapshot,
+      },
+      { status: 429 }
+    );
+  }
+
+  // AI 调用次数用尽：仍返回模板兜底，不扣 DeepSeek
+  if (!reserved.ok && reserved.error === "QUOTA_AI") {
+    return NextResponse.json({
+      affirmation: generateFallback(input, tone),
+      quota: reserved.snapshot,
+      fallbackReason: "QUOTA_AI",
+    });
+  }
+
+  if (!reserved.ok) {
+    return NextResponse.json(
+      {
+        affirmation: generateFallback(input, tone),
+        fallbackReason: reserved.error,
+      },
+      { status: 200 }
+    );
+  }
+
   const affirmation = await runAffirmationAgent(input, tone);
-  return NextResponse.json({ affirmation });
+  return NextResponse.json({
+    affirmation,
+    quota: reserved.snapshot,
+  });
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import AppTopBar from "@/components/ui/AppTopBar";
 import GooeyNav from "@/components/ui/GooeyNav";
 import WorkDetailModal from "@/components/ui/WorkDetailModal";
 import WorkGridPlayButton from "@/components/ui/WorkGridPlayButton";
-import { getSoundscape } from "@/lib/constants";
 import type { TrackRecord } from "@/lib/history";
+import type { QuotaSnapshot } from "@/lib/quota/types";
 
 export type ThemeMode = "light" | "dark";
 
@@ -58,6 +58,7 @@ export default function HomeDashboard({
   records,
   profile,
   theme,
+  quota,
   onCreate,
   onProfileChange,
   onThemeChange,
@@ -67,6 +68,7 @@ export default function HomeDashboard({
   records: TrackRecord[];
   profile: UserProfile;
   theme: ThemeMode;
+  quota: QuotaSnapshot | null;
   onCreate: () => void;
   onProfileChange: (profile: UserProfile) => void;
   onThemeChange: (theme: ThemeMode) => void;
@@ -81,6 +83,44 @@ export default function HomeDashboard({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const drainRef = useRef<{ audio: HTMLAudioElement; url: string } | null>(null);
+
+  const stopDrain = useCallback(() => {
+    const cur = drainRef.current;
+    if (!cur) return;
+    cur.audio.pause();
+    URL.revokeObjectURL(cur.url);
+    drainRef.current = null;
+  }, []);
+
+  const stopGridAndDrain = useCallback(() => {
+    stopDrain();
+    setPlayingId(null);
+  }, [stopDrain]);
+
+  const continueUntilEnd = useCallback(
+    (audio: HTMLAudioElement, url: string, trackId: string) => {
+      stopDrain();
+      setPlayingId(trackId);
+      const onEnded = () => {
+        audio.pause();
+        audio.removeEventListener("ended", onEnded);
+        URL.revokeObjectURL(url);
+        if (drainRef.current?.audio === audio) drainRef.current = null;
+        setPlayingId((cur) => (cur === trackId ? null : cur));
+      };
+      audio.addEventListener("ended", onEnded);
+      drainRef.current = { audio, url };
+      if (audio.paused) {
+        void audio.play().catch(() => {
+          onEnded();
+        });
+      }
+    },
+    [stopDrain]
+  );
+
+  useEffect(() => () => stopDrain(), [stopDrain]);
 
   const selected = selectedId
     ? records.find((r) => r.id === selectedId) ?? null
@@ -177,7 +217,13 @@ export default function HomeDashboard({
         rightAction={
           <button
             onClick={onCreate}
-            className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm"
+            disabled={quota !== null && !quota.canCreate}
+            className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-45"
+            title={
+              quota && !quota.canCreate
+                ? `今日次数已用完，约 ${quota.resetLabel} 重置`
+                : undefined
+            }
           >
             <Icon className="h-4 w-4">
               <path d="M12 5v14M5 12h14" />
@@ -191,24 +237,17 @@ export default function HomeDashboard({
         {activeTabIndex === 1 ? (
           <div className="flex-1" aria-hidden />
         ) : (
-          <motion.div
-            key={activeTabIndex}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, ease: "easeOut" }}
-            className="glass min-h-[60dvh] flex-1 rounded-[var(--radius-2xl)] p-4"
-          >
-            {activeTabIndex === 0 ? (
-              <>
-                <div className="mb-4">
-                  <h1 className="text-xl font-bold text-[var(--color-mist)] sm:text-2xl">我的作品</h1>
-                  <p className="mt-1 text-sm text-[var(--color-haze)]">
-                    {records.length > 0 ? `${records.length} 条已保存音频` : "还没有保存的音频"}
-                  </p>
-                </div>
-
-                {records.length === 0 ? (
-                  <div className="flex min-h-[44dvh] items-center justify-center rounded-3xl border border-dashed border-[var(--color-border)] bg-black/[0.03] px-6 text-center">
+          <div className="flex flex-1 flex-col">
+            <motion.div
+              key={activeTabIndex}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+              className="flex-1"
+            >
+              {activeTabIndex === 0 ? (
+                records.length === 0 ? (
+                  <div className="glass flex min-h-[44dvh] items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
                     <div>
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-aura)]/12 text-[var(--color-aura)]">
                         <Icon className="h-6 w-6">
@@ -224,66 +263,80 @@ export default function HomeDashboard({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    {records.map((record) => {
-                      const accent = getSoundscape(record.params.soundscape).accent;
-                      return (
-                        <div
-                          key={record.id}
-                          className="rounded-3xl bg-black/[0.04] p-2.5 transition-colors hover:bg-black/[0.06]"
-                        >
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedId(record.id)}
-                              className="block w-full text-left"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={record.coverDataUrl}
-                                alt={record.title}
-                                className="aspect-square w-full rounded-2xl object-cover"
-                              />
-                            </button>
-                            <div className="absolute bottom-3 right-3">
-                              <WorkGridPlayButton
-                                trackId={record.id}
-                                active={playingId === record.id}
-                                accent={accent}
-                                onPlay={(id) => setPlayingId(id)}
-                                onStop={() => setPlayingId(null)}
-                              />
-                            </div>
-                          </div>
+                    {records.map((record) => (
+                      <div
+                        key={record.id}
+                        className="glass rounded-3xl p-2.5 transition-colors hover:bg-white/40"
+                      >
+                        <div className="relative">
                           <button
                             type="button"
-                            onClick={() => setSelectedId(record.id)}
-                            className="mt-2.5 w-full min-w-0 text-left"
+                            onClick={() => {
+                              stopDrain();
+                              setPlayingId(null);
+                              setSelectedId(record.id);
+                            }}
+                            className="block w-full text-left"
                           >
-                            <p className="truncate text-sm font-semibold text-[var(--color-mist)]">
-                              {record.title}
-                            </p>
-                            <p className="mt-1 text-xs text-[var(--color-haze)]">
-                              {dateLabel(record.createdAt)} · {Math.round(record.durationSec)}s
-                            </p>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={record.coverDataUrl}
+                              alt={record.title}
+                              className="aspect-square w-full rounded-2xl object-cover"
+                            />
                           </button>
+                          <div className="absolute bottom-3 right-3">
+                            <WorkGridPlayButton
+                              trackId={record.id}
+                              active={playingId === record.id}
+                              onPlay={(id) => {
+                                stopDrain();
+                                setPlayingId(id);
+                              }}
+                              onStop={stopGridAndDrain}
+                            />
+                          </div>
                         </div>
-                      );
-                    })}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            stopDrain();
+                            setPlayingId(null);
+                            setSelectedId(record.id);
+                          }}
+                          className="mt-2.5 w-full min-w-0 text-left"
+                        >
+                          <p className="truncate text-sm font-semibold text-[var(--color-mist)]">
+                            {record.title}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--color-haze)]">
+                            {dateLabel(record.createdAt)} · {Math.round(record.durationSec)}s
+                          </p>
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="mb-4">
+                )
+              ) : (
+                <div className="glass flex min-h-[44dvh] flex-col items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
                   <h1 className="text-xl font-bold text-[var(--color-mist)] sm:text-2xl">社区</h1>
-                  <p className="mt-1 text-sm text-[var(--color-haze)]">预留入口</p>
+                  <p className="mt-2 text-sm text-[var(--color-haze)]">社区内容即将开放</p>
                 </div>
-                <div className="flex min-h-[44dvh] items-center justify-center rounded-3xl border border-dashed border-[var(--color-border)] bg-black/[0.03]">
-                  <span className="text-sm text-[var(--color-haze)]">社区内容即将开放</span>
-                </div>
-              </>
+              )}
+            </motion.div>
+
+            {activeTabIndex === 0 && quota && (
+              <p
+                className={`mt-3 rounded-2xl px-3 py-2.5 text-center text-xs ${
+                  quota.canCreate
+                    ? "bg-[var(--color-aura)]/10 text-[var(--color-mist-soft)]"
+                    : "bg-amber-500/12 text-amber-800"
+                }`}
+              >
+                今日还可制作 {quota.tracksRemaining} / {quota.trackLimit} 条
+              </p>
             )}
-          </motion.div>
+          </div>
         )}
       </section>
 
@@ -315,8 +368,10 @@ export default function HomeDashboard({
           onClose={() => {
             setSelectedId(null);
           }}
+          onContinueUntilEnd={continueUntilEnd}
           onSave={onSaveWork}
           onDelete={(id) => {
+            stopDrain();
             if (playingId === id) setPlayingId(null);
             onDeleteWork(id);
             setSelectedId(null);

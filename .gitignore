@@ -17,6 +17,7 @@
 .playwright-cli/
 /output/
 .claude/
+/data/
 
 # debug
 npm-debug.log*

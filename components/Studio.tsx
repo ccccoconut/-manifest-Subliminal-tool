@@ -33,6 +33,13 @@ import {
   updateTrack,
   type TrackRecord,
 } from "@/lib/history";
+import {
+  consumeTrackQuota,
+  fetchQuota,
+  quotaExhaustedMessage,
+  quotaHeaders,
+} from "@/lib/quota/client";
+import type { QuotaSnapshot } from "@/lib/quota/types";
 import type {
   Affirmation,
   BgAudio,
@@ -128,11 +135,18 @@ export default function Studio() {
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [theme, setTheme] = useState<ThemeMode>("light");
+  const [quota, setQuota] = useState<QuotaSnapshot | null>(null);
   const pending = useRef<{ input: UserInput; tone: ToneKey } | null>(null);
+
+  const refreshQuota = useCallback(async () => {
+    const next = await fetchQuota();
+    if (next) setQuota(next);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
     setHistory(loadHistory());
+    void refreshQuota();
     try {
       const savedProfile = localStorage.getItem(PROFILE_KEY);
       if (savedProfile) {
@@ -151,7 +165,7 @@ export default function Studio() {
     } catch {
       /* keep defaults */
     }
-  }, []);
+  }, [refreshQuota]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -182,10 +196,18 @@ export default function Studio() {
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: quotaHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ ...userInput, tone }),
         });
         const data = await res.json();
+        if (data.quota) setQuota(data.quota);
+
+        if (res.status === 429 && data.error === "QUOTA_TRACK") {
+          alert(data.message || quotaExhaustedMessage(data.quota));
+          setStep("home");
+          return;
+        }
+
         if (data.safety?.triggered) {
           pending.current = { input: userInput, tone };
           setSafety({ resources: data.safety.resources });
@@ -212,6 +234,11 @@ export default function Studio() {
   );
 
   const handleFirstGenerate = (userInput: UserInput) => {
+    if (quota && !quota.canCreate) {
+      alert(quotaExhaustedMessage(quota));
+      setStep("home");
+      return;
+    }
     setInput(userInput);
     runGenerate(userInput, "default", true);
   };
@@ -237,13 +264,15 @@ export default function Studio() {
 
   const handleGenerateTrack = async (take: VoiceTake) => {
     if (!params || !affirmation) return;
+    if (quota && !quota.canCreate) {
+      alert(quotaExhaustedMessage(quota));
+      return;
+    }
     setGenMix(true);
     setProgress(0);
     try {
-      // 阶段 1-2：理解 / 自我对话（已生成，做叙事性推进）
       await ramp(0, 0.22, 650, setProgress);
       await ramp(0.22, 0.45, 650, setProgress);
-      // 阶段 3：混音（真实进度映射到 0.45→0.9）
       const { buffer, durationSec } = await renderMix({
         voiceBlob: take.blob,
         params,
@@ -252,7 +281,6 @@ export default function Studio() {
       });
       const enc = encodeTrack(buffer);
       const audioBlobUrl = URL.createObjectURL(enc.blob);
-      // 阶段 4：封面
       await ramp(0.9, 0.98, 400, setProgress);
       const coverDataUrl = generateCover({
         affirmation: affirmation.anchorLine || affirmation.lines[0] || "",
@@ -273,7 +301,16 @@ export default function Studio() {
         durationSec,
         createdAt: Date.now(),
       };
-      // 音频写入 IndexedDB，作品库才能回放
+
+      // 完整流程成功：服务端计次（删除不返还）
+      const consumed = await consumeTrackQuota(t.id);
+      if (consumed.quota) setQuota(consumed.quota);
+      if (!consumed.ok && consumed.error === "QUOTA_TRACK") {
+        URL.revokeObjectURL(audioBlobUrl);
+        alert(quotaExhaustedMessage(consumed.quota));
+        return;
+      }
+
       try {
         await putTrackAudio(t.id, enc.blob);
       } catch (err) {
@@ -398,6 +435,10 @@ export default function Studio() {
   };
 
   const startCreate = () => {
+    if (quota && !quota.canCreate) {
+      alert(quotaExhaustedMessage(quota));
+      return;
+    }
     if (voiceTake) URL.revokeObjectURL(voiceTake.url);
     if (bgAudio?.url) URL.revokeObjectURL(bgAudio.url);
     if (track) URL.revokeObjectURL(track.audioBlobUrl);
@@ -459,6 +500,7 @@ export default function Studio() {
                 records={history}
                 profile={profile}
                 theme={theme}
+                quota={quota}
                 onCreate={startCreate}
                 onProfileChange={updateProfile}
                 onThemeChange={setTheme}

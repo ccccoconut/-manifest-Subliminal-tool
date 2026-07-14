@@ -8,13 +8,11 @@ export default function WorkGridPlayButton({
   active,
   onPlay,
   onStop,
-  accent = "#4f9d2e",
 }: {
   trackId: string;
   active: boolean;
   onPlay: (id: string) => void;
   onStop: () => void;
-  accent?: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
@@ -45,8 +43,8 @@ export default function WorkGridPlayButton({
     e.stopPropagation();
     e.preventDefault();
 
-    if (active && audioRef.current) {
-      audioRef.current.pause();
+    if (active) {
+      audioRef.current?.pause();
       onStop();
       return;
     }
@@ -83,23 +81,24 @@ export default function WorkGridPlayButton({
       type="button"
       onClick={toggle}
       aria-label={active ? "暂停" : "播放"}
-      className="flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105"
+      className="flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-transform hover:scale-105"
       style={{
-        background: `linear-gradient(135deg, ${accent}, #cef595)`,
-        boxShadow: `0 6px 20px -6px ${accent}`,
+        background: "rgba(255, 255, 255, 0.42)",
+        boxShadow: "0 4px 14px -4px rgba(18, 63, 42, 0.28)",
+        border: "1px solid rgba(255, 255, 255, 0.55)",
       }}
     >
       {loading ? (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a14]/30 border-t-[#0a0a14]" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#123f2a]/25 border-t-[#123f2a]" />
       ) : error ? (
-        <span className="text-xs font-bold text-[#0a0a14]">!</span>
+        <span className="text-xs font-bold text-[#123f2a]">!</span>
       ) : active ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="#0a0a14">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#123f2a">
           <rect x="6" y="5" width="4" height="14" rx="1" />
           <rect x="14" y="5" width="4" height="14" rx="1" />
         </svg>
       ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0a14">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#123f2a">
           <path d="M8 5v14l11-7z" />
         </svg>
       )}
