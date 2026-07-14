@@ -7,6 +7,7 @@ export default function AppTopBar({
   onIconClick,
   iconAriaLabel,
   iconAriaExpanded,
+  iconCircle = false,
   settingsDropdown,
   backLabel,
   onBack,
@@ -16,13 +17,19 @@ export default function AppTopBar({
   onIconClick?: () => void;
   iconAriaLabel?: string;
   iconAriaExpanded?: boolean;
+  /** Custom avatar: clip to circle; default brand mark stays rounded square */
+  iconCircle?: boolean;
   settingsDropdown?: React.ReactNode;
   backLabel?: string;
   onBack?: () => void;
   rightAction?: React.ReactNode;
 }) {
   return (
-    <header className="app-topbar relative w-full shrink-0 px-4 pb-2 pt-4">
+    <header
+      className={`app-topbar relative w-full shrink-0 px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))] ${
+        settingsDropdown ? "z-50" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
           <div className="relative shrink-0">
@@ -33,7 +40,9 @@ export default function AppTopBar({
                 onClick={onIconClick}
                 aria-label={iconAriaLabel}
                 aria-expanded={iconAriaExpanded}
-                className="app-topbar-icon flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-aura)]/15 font-bold text-[var(--color-aura)] ring-1 ring-white/70"
+                className={`app-topbar-icon flex h-9 w-9 items-center justify-center overflow-hidden bg-[var(--color-aura)]/15 font-bold text-[var(--color-aura)] ring-1 ring-white/70 ${
+                  iconCircle ? "rounded-full" : "rounded-2xl"
+                }`}
               >
                 {icon}
               </button>

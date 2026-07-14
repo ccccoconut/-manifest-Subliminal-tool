@@ -153,7 +153,7 @@ export default function Studio() {
         const parsed = JSON.parse(savedProfile);
         setProfile({
           nickname:
-            typeof parsed.nickname === "string" && parsed.nickname.trim()
+            typeof parsed.nickname === "string"
               ? parsed.nickname
               : DEFAULT_PROFILE.nickname,
           avatarDataUrl:
@@ -179,7 +179,7 @@ export default function Studio() {
 
   const updateProfile = useCallback((next: UserProfile) => {
     const normalized = {
-      nickname: next.nickname.trim() ? next.nickname : DEFAULT_PROFILE.nickname,
+      nickname: next.nickname,
       avatarDataUrl: next.avatarDataUrl,
     };
     setProfile(normalized);
@@ -469,7 +469,7 @@ export default function Studio() {
                 : null;
 
   return (
-    <main className="relative flex min-h-screen flex-col">
+    <main className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden">
       {step !== "home" && (
         <AppTopBar
           icon="In"
@@ -481,8 +481,10 @@ export default function Studio() {
       )}
 
       <section
-        className={`flex flex-1 ${
-          step === "home" ? "" : "items-start justify-center px-4 pb-8 pt-1"
+        className={`flex min-h-0 flex-1 ${
+          step === "home"
+            ? "flex-col overflow-hidden"
+            : "items-start justify-center overflow-y-auto overscroll-contain px-4 pb-8 pt-1"
         }`}
       >
         <AnimatePresence mode="wait">
@@ -493,7 +495,7 @@ export default function Studio() {
             animate="center"
             exit="exit"
             transition={{ duration: 0.32, ease: "easeOut" }}
-            className="w-full"
+            className={step === "home" ? "flex h-full min-h-0 w-full flex-col" : "w-full"}
           >
             {step === "home" && (
               <HomeDashboard
@@ -592,9 +594,11 @@ export default function Studio() {
         </AnimatePresence>
       </section>
 
-      <footer className="pb-6">
-        {step !== "home" && step !== "input" && <ComplianceBar compact />}
-      </footer>
+      {step !== "home" && step !== "input" && (
+        <footer className="pb-6">
+          <ComplianceBar compact />
+        </footer>
+      )}
 
       {genMix && <GenerationOverlay progress={progress} />}
 

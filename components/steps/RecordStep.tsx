@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { VoiceRecorder } from "@/lib/audio/recorder";
 import { DISCLAIMER_RECORD } from "@/lib/constants";
 import type { VoiceTake } from "@/lib/types";
-import Strands from "@/components/ui/Strands";
+import VoiceOrb from "@/components/ui/VoiceOrb";
 
 type Status = "idle" | "recording" | "recorded" | "error";
 const MIN_TAKE_SEC = 3;
@@ -86,6 +86,8 @@ export default function RecordStep({
     setElapsed(0);
   };
 
+  const recording = status === "recording";
+
   return (
     <div className="mx-auto w-full max-w-2xl">
       <div className="text-center">
@@ -108,26 +110,8 @@ export default function RecordStep({
         </ul>
       </div>
 
-      {/* visualizer — a single centered strand.
-          waviness is kept very low so the one strand stays a single centered
-          line (higher waviness makes the same strand snake up/down and read as
-          several strands). It only rises/falls with the mic level. */}
-      <div className="mt-6 h-20 w-full overflow-hidden rounded-2xl">
-        <Strands
-          colors={["#f0abfc", "#a78bfa", "#b578ee"]}
-          count={1}
-          speed={status === "recording" ? 0.6 + level * 2.0 : 0.08}
-          amplitude={status === "recording" ? 0.5 + level * 1.8 : 0.12}
-          waviness={0.28}
-          thickness={0.9}
-          glow={2.6}
-          taper={2}
-          spread={0}
-          intensity={status === "recording" ? 0.55 + level * 0.8 : 0.32}
-          saturation={1.4}
-          opacity={status === "recording" ? 1 : 0.55}
-          scale={1.4}
-        />
+      <div className="mt-5">
+        <VoiceOrb level={level} active={recording} />
       </div>
 
       <div className="min-h-[1.25rem] text-center text-sm tabular-nums text-[var(--color-haze)]">

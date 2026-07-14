@@ -50,10 +50,6 @@ function dateLabel(ts: number) {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-function initials(name: string) {
-  return (name.trim().slice(0, 2) || "我").toUpperCase();
-}
-
 export default function HomeDashboard({
   records,
   profile,
@@ -136,16 +132,30 @@ export default function HomeDashboard({
   };
 
   return (
-    <div className="relative flex min-h-[100dvh] w-full flex-col pb-28">
+    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden">
+      {settingsOpen ? (
+        <button
+          type="button"
+          aria-label="关闭个人设置"
+          className="fixed inset-0 z-40 cursor-default bg-transparent"
+          onClick={() => setSettingsOpen(false)}
+        />
+      ) : null}
+
       <AppTopBar
         icon={
           profile.avatarDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatarDataUrl} alt="头像" className="h-full w-full object-cover" />
+            <img
+              src={profile.avatarDataUrl}
+              alt="头像"
+              className="h-full w-full object-cover"
+            />
           ) : (
             "In"
           )
         }
+        iconCircle={Boolean(profile.avatarDataUrl)}
         onIconClick={() => setSettingsOpen((v) => !v)}
         iconAriaLabel="打开个人设置"
         iconAriaExpanded={settingsOpen}
@@ -154,10 +164,12 @@ export default function HomeDashboard({
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
+              onClick={(e) => e.stopPropagation()}
               className="glass absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[min(280px,calc(100vw-2.5rem))] rounded-3xl p-4"
             >
               <div className="flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={() => fileRef.current?.click()}
                   className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-aura)]/18 text-sm font-bold text-[var(--color-aura)]"
                   aria-label="修改头像"
@@ -170,7 +182,7 @@ export default function HomeDashboard({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    initials(profile.nickname)
+                    "In"
                   )}
                 </button>
                 <div className="min-w-0 flex-1">
@@ -180,7 +192,8 @@ export default function HomeDashboard({
                     onChange={(e) =>
                       onProfileChange({ ...profile, nickname: e.target.value })
                     }
-                    className="mt-1 w-full rounded-xl bg-black/[0.05] px-3 py-2 text-sm font-semibold text-[var(--color-mist)] outline-none ring-1 ring-black/[0.06] focus:ring-[var(--color-aura)]/60"
+                    placeholder="可选"
+                    className="mt-1 w-full rounded-xl bg-black/[0.05] px-3 py-2 text-sm font-semibold text-[var(--color-mist)] outline-none ring-1 ring-black/[0.06] placeholder:font-medium placeholder:text-[var(--color-haze)] focus:ring-[var(--color-aura)]/60"
                   />
                 </div>
               </div>
@@ -199,6 +212,7 @@ export default function HomeDashboard({
                   {(["light", "dark"] as const).map((mode) => (
                     <button
                       key={mode}
+                      type="button"
                       onClick={() => onThemeChange(mode)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                         theme === mode
@@ -233,42 +247,69 @@ export default function HomeDashboard({
         }
       />
 
-      <section className="relative flex flex-1 flex-col px-4 py-4">
+      <section className="relative flex min-h-0 flex-1 flex-col px-4 pb-2 pt-2">
         {activeTabIndex === 1 ? (
-          <div className="flex-1" aria-hidden />
+          <div className="min-h-0 flex-1" aria-hidden />
         ) : (
-          <div className="flex flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <motion.div
               key={activeTabIndex}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.24, ease: "easeOut" }}
-              className="flex-1"
+              className="flex min-h-0 flex-1 flex-col"
             >
               {activeTabIndex === 0 ? (
                 records.length === 0 ? (
-                  <div className="glass flex min-h-[44dvh] items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
-                    <div>
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-aura)]/12 text-[var(--color-aura)]">
-                        <Icon className="h-6 w-6">
-                          <path d="M9 18V6l11-2v12" />
-                          <circle cx="6" cy="18" r="3" />
-                          <circle cx="17" cy="16" r="3" />
-                        </Icon>
-                      </div>
-                      <p className="mt-4 text-sm font-semibold text-[var(--color-mist)]">
-                        创建第一条 Sub 音频
-                      </p>
+                  <div className="glass flex min-h-0 flex-1 flex-col items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-aura)]/12 text-[var(--color-aura)]">
+                      <Icon className="h-6 w-6">
+                        <path d="M9 18V6l11-2v12" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="17" cy="16" r="3" />
+                      </Icon>
                     </div>
+                    <p className="mt-4 text-sm font-semibold text-[var(--color-mist)]">
+                      创建第一条 Sub 音频
+                    </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {records.map((record) => (
-                      <div
-                        key={record.id}
-                        className="glass rounded-3xl p-2.5 transition-colors hover:bg-white/40"
-                      >
-                        <div className="relative">
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    <div className="grid grid-cols-2 gap-3 pb-1">
+                      {records.map((record) => (
+                        <div
+                          key={record.id}
+                          className="glass rounded-3xl p-2.5 transition-colors hover:bg-white/40"
+                        >
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                stopDrain();
+                                setPlayingId(null);
+                                setSelectedId(record.id);
+                              }}
+                              className="block w-full text-left"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={record.coverDataUrl}
+                                alt={record.title}
+                                className="aspect-square w-full rounded-2xl object-cover"
+                              />
+                            </button>
+                            <div className="absolute bottom-3 right-3">
+                              <WorkGridPlayButton
+                                trackId={record.id}
+                                active={playingId === record.id}
+                                onPlay={(id) => {
+                                  stopDrain();
+                                  setPlayingId(id);
+                                }}
+                                onStop={stopGridAndDrain}
+                              />
+                            </div>
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
@@ -276,49 +317,22 @@ export default function HomeDashboard({
                               setPlayingId(null);
                               setSelectedId(record.id);
                             }}
-                            className="block w-full text-left"
+                            className="mt-2.5 w-full min-w-0 text-left"
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={record.coverDataUrl}
-                              alt={record.title}
-                              className="aspect-square w-full rounded-2xl object-cover"
-                            />
+                            <p className="truncate text-sm font-semibold text-[var(--color-mist)]">
+                              {record.title}
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--color-haze)]">
+                              {dateLabel(record.createdAt)} · {Math.round(record.durationSec)}s
+                            </p>
                           </button>
-                          <div className="absolute bottom-3 right-3">
-                            <WorkGridPlayButton
-                              trackId={record.id}
-                              active={playingId === record.id}
-                              onPlay={(id) => {
-                                stopDrain();
-                                setPlayingId(id);
-                              }}
-                              onStop={stopGridAndDrain}
-                            />
-                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            stopDrain();
-                            setPlayingId(null);
-                            setSelectedId(record.id);
-                          }}
-                          className="mt-2.5 w-full min-w-0 text-left"
-                        >
-                          <p className="truncate text-sm font-semibold text-[var(--color-mist)]">
-                            {record.title}
-                          </p>
-                          <p className="mt-1 text-xs text-[var(--color-haze)]">
-                            {dateLabel(record.createdAt)} · {Math.round(record.durationSec)}s
-                          </p>
-                        </button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )
               ) : (
-                <div className="glass flex min-h-[44dvh] flex-col items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
+                <div className="glass flex min-h-0 flex-1 flex-col items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
                   <h1 className="text-xl font-bold text-[var(--color-mist)] sm:text-2xl">社区</h1>
                   <p className="mt-2 text-sm text-[var(--color-haze)]">社区内容即将开放</p>
                 </div>
@@ -327,7 +341,7 @@ export default function HomeDashboard({
 
             {activeTabIndex === 0 && quota && (
               <p
-                className={`mt-3 rounded-2xl px-3 py-2.5 text-center text-xs ${
+                className={`mt-2 shrink-0 rounded-2xl px-3 py-2 text-center text-xs ${
                   quota.canCreate
                     ? "bg-[var(--color-aura)]/10 text-[var(--color-mist-soft)]"
                     : "bg-amber-500/12 text-amber-800"
@@ -340,19 +354,13 @@ export default function HomeDashboard({
         )}
       </section>
 
-      <div
-        className="pointer-events-none fixed bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
-        style={{
-          left: "var(--frame-left, 0px)",
-          width: "min(100%, var(--frame-max, 480px))",
-        }}
-      >
+      <div className="relative z-40 shrink-0 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1">
         {activeTabIndex === 1 && (
           <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-white drop-shadow-[0_1px_4px_rgba(18,63,42,0.35)]">
             沉浸式滑动背景&gt;&lt;
           </p>
         )}
-        <div className="gooey-nav-shell glass pointer-events-auto overflow-hidden rounded-[var(--radius-2xl)] shadow-[0_20px_50px_-28px_rgba(18,63,42,0.18)]">
+        <div className="gooey-nav-shell glass overflow-hidden rounded-[var(--radius-2xl)] shadow-[0_20px_50px_-28px_rgba(18,63,42,0.18)]">
           <GooeyNav
             items={NAV_ITEMS}
             activeIndex={activeTabIndex}
