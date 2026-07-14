@@ -12,8 +12,30 @@ type StoreFile = {
   devices: Record<string, DayQuota>;
 };
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "quota.json");
+const CANDIDATE_DIRS = [
+  path.join(process.cwd(), "data"),
+  path.join("/tmp", "innertune-quota"),
+];
+
+function resolvePaths(): { dir: string; file: string } {
+  for (const dir of CANDIDATE_DIRS) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      const probe = path.join(dir, ".write-test");
+      fs.writeFileSync(probe, "ok");
+      fs.unlinkSync(probe);
+      return { dir, file: path.join(dir, "quota.json") };
+    } catch {
+      /* try next */
+    }
+  }
+  return {
+    dir: CANDIDATE_DIRS[0],
+    file: path.join(CANDIDATE_DIRS[0], "quota.json"),
+  };
+}
+
+const { dir: DATA_DIR, file: DATA_FILE } = resolvePaths();
 
 let cache: StoreFile | null = null;
 
