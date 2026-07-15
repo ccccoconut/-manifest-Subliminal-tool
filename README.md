@@ -156,6 +156,79 @@ npm run build    # 生产构建
 npm run start    # 生产运行
 ```
 
+## 部署与版本回滚
+
+线上环境：**https://ciery0003.cn**（腾讯轻量服务器，PM2 进程名 `yxr`）。
+
+### 版本标签
+
+每次确认可上线后，在对应提交打 tag 并推送：
+
+```bash
+git tag -a v0.2 <commit-hash> -m "v0.2: 简要说明"
+git push subliminal v0.2
+```
+
+| 标签 | 说明 |
+| --- | --- |
+| `v0.1` | 首页/录音页布局优化、语音球 |
+| `v0.2` | 反馈系统、说明 Tab、曲库、导航与音频优化 |
+
+### 上线（服务器 OrcaTerm）
+
+```bash
+cd /path/to/yxr          # 换成你的项目目录
+git fetch --tags
+git checkout main        # 或 git checkout v0.2
+git pull
+npm install
+npm run build
+pm2 restart yxr
+```
+
+合并到 `main` 后部署，或 `git checkout v0.2` 部署指定版本。
+
+服务器 `.env.local` 需单独配置（不提交 Git），例如：
+
+```env
+FEEDBACK_ADMIN_PASSWORD=你的管理密码
+SITE_URL=https://ciery0003.cn
+LARK_FEEDBACK_WEBHOOK_URL=   # 可选，飞书新反馈通知
+```
+
+反馈管理页：`https://ciery0003.cn/admin/feedback`
+
+### 紧急回滚到旧版本
+
+```bash
+cd /path/to/yxr
+git fetch --tags
+git checkout v0.1          # 换成目标版本
+npm install
+npm run build
+pm2 restart yxr
+```
+
+回滚后服务器处于「按标签检出」状态；恢复跟进最新版：
+
+```bash
+git checkout main
+git pull
+npm run build
+pm2 restart yxr
+```
+
+### 在 Git 上正式撤销（可选）
+
+已合并到 `main` 但新版本有问题，可用 revert 保留历史：
+
+```bash
+git revert <问题提交的 hash>
+git push subliminal main
+```
+
+再在服务器 `git pull` + `npm run build` + `pm2 restart yxr`。
+
 ## Roadmap
 
 - **P0（已完成）**：完整情绪转化闭环 + 结构化 AI + 情绪前后评分 + 合规/安全 + 历史回顾。
