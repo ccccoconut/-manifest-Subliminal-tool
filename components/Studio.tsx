@@ -16,6 +16,13 @@ import RecordStep from "@/components/steps/RecordStep";
 import BackgroundStep from "@/components/steps/SoundscapeStep";
 import MixConsoleStep from "@/components/steps/MixConsoleStep";
 import ResultStep from "@/components/steps/ResultStep";
+import DevSkipPanel, { type DevJumpTarget } from "@/components/dev/DevSkipPanel";
+import {
+  createDevAffirmation,
+  createSilentVoiceTake,
+  DEV_MOCK_INPUT,
+  loadDevLibraryBg,
+} from "@/lib/devFixtures";
 import { APP_NAME, DEFAULT_RECIPE_DURATION, MAX_TOTAL_DURATION, RECIPE_VOICE, resolveSoundscapeId } from "@/lib/constants";
 import { generateFallback } from "@/lib/affirmation/fallback";
 import { renderMix } from "@/lib/audio/mixer";
@@ -71,7 +78,7 @@ function defaultParams(aff: Affirmation): MixParams {
     rhythm: voice.rhythm,
     baseHz: 432,
     bgVolume: 0.95,
-    voiceVolume: 0.6, // 潜听：被背景音覆盖
+    voiceVolume: 0.45, // UI 百分比；合成时再按潜听比例相对背景压低
     voiceSpeed: 1.0,
     overlayTracks: 0,
     stagger: 0,
@@ -453,6 +460,115 @@ export default function Studio() {
     setStep("input");
   };
 
+  const ensureDevVoice = useCallback((): VoiceTake => {
+    if (voiceTake) return voiceTake;
+    const take = createSilentVoiceTake(6);
+    setVoiceTake(take);
+    return take;
+  }, [voiceTake]);
+
+  const jumpDev = useCallback(
+    async (target: DevJumpTarget) => {
+      setGenAff(false);
+      setGenMix(false);
+      setSafety(null);
+
+      if (target === "input") {
+        startCreate();
+        return;
+      }
+
+      const aff = affirmation ?? createDevAffirmation();
+      const nextParams = params ?? defaultParams(aff);
+      if (!affirmation) setAffirmation(aff);
+      if (!params) setParams(nextParams);
+      if (!input) setInput(DEV_MOCK_INPUT);
+
+      if (target === "affirmation") {
+        setStep("affirmation");
+        return;
+      }
+
+      if (target === "record") {
+        setStep("record");
+        return;
+      }
+
+      // background / mixconsole 需要假录音
+      ensureDevVoice();
+
+      if (target === "background") {
+        setStep("background");
+        return;
+      }
+
+      // mixconsole：可选带上曲库第一首，方便测混音
+      if (!bgAudio) {
+        const lib = await loadDevLibraryBg();
+        if (lib) {
+          setBgAudio(lib);
+          setParams((p) =>
+            p
+              ? {
+                  ...p,
+                  bgSource: "library",
+                  totalDuration: Math.min(
+                    MAX_TOTAL_DURATION,
+                    Math.round(lib.durationSec)
+                  ),
+                }
+              : {
+                  ...nextParams,
+                  bgSource: "library",
+                  totalDuration: Math.min(
+                    MAX_TOTAL_DURATION,
+                    Math.round(lib.durationSec)
+                  ),
+                }
+          );
+        }
+      }
+      setStep("mixconsole");
+    },
+    // startCreate closes over latest state; fine for dev panel
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [affirmation, params, input, bgAudio, ensureDevVoice]
+  );
+
+  const skipDevCurrent = useCallback(async () => {
+    switch (step) {
+      case "home":
+        startCreate();
+        break;
+      case "input":
+        await jumpDev("affirmation");
+        break;
+      case "affirmation":
+        await jumpDev("record");
+        break;
+      case "record":
+        await jumpDev("background");
+        break;
+      case "background":
+        await jumpDev("mixconsole");
+        break;
+      default:
+        break;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, jumpDev]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const w = window as Window & {
+      __yxrDevJump?: (target: DevJumpTarget) => void | Promise<void>;
+    };
+    w.__yxrDevJump = jumpDev;
+    return () => {
+      delete w.__yxrDevJump;
+    };
+  }, [jumpDev]);
+
   const wizardBack =
     step === "input"
       ? { label: "返回首页", action: restart }
@@ -562,7 +678,7 @@ export default function Studio() {
                       p
                         ? {
                             ...p,
-                            bgSource: "upload",
+                            bgSource: a.source === "library" ? "library" : "upload",
                             totalDuration: Math.min(
                               MAX_TOTAL_DURATION,
                               Math.round(a.durationSec)
@@ -616,6 +732,11 @@ export default function Studio() {
         />
       )}
 
+      <DevSkipPanel
+        currentStep={step}
+        onJump={jumpDev}
+        onSkipCurrent={skipDevCurrent}
+      />
     </main>
   );
 }

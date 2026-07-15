@@ -33,13 +33,16 @@
   display: flex;
   position: relative;
   justify-content: center;
+  width: 100%;
 }
 
 .gooey-nav-container nav ul {
   display: flex;
-  gap: 0.35rem;
+  width: 100%;
+  justify-content: space-between;
+  gap: 0.25rem;
   list-style: none;
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem 0.65rem;
   margin: 0;
   position: relative;
   z-index: 2;
@@ -51,12 +54,14 @@
   cursor: pointer;
   color: var(--color-haze);
   transition: color 0.28s ease;
+  flex: 1 1 0;
+  text-align: center;
 }
 
 .gooey-nav-container nav ul li a {
-  display: inline-block;
-  padding: 0.62em 1.05em;
-  font-size: 0.875rem;
+  display: block;
+  padding: 0.6em 0.35em;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-decoration: none;
   color: inherit;

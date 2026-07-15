@@ -74,6 +74,13 @@ const PATHS = {
       <circle cx="12" cy="12" r="2.2" />
     </>
   ),
+  library: (
+    <>
+      <path d="M8 6h12v14H8z" />
+      <path d="M6 8H4v12h12v-2" />
+      <path d="M11 10h5M11 14h6" />
+    </>
+  ),
   mute: (
     <>
       <path d="M11 5 6 9H3v6h3l5 4z" />
@@ -93,6 +100,7 @@ const SCENE_ICON: Record<SceneKey, keyof typeof PATHS> = {
 const BG_ICON: Record<BgSource, keyof typeof PATHS> = {
   recipe: "music",
   upload: "upload",
+  library: "library",
   qqmusic: "disc",
   none: "mute",
 };

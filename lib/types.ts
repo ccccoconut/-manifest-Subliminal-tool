@@ -8,7 +8,7 @@ export type DistanceKey = "near" | "mid" | "far";
 export type RhythmKey = "none" | "light" | "strong";
 
 /** 背景音来源（STEP 4） */
-export type BgSource = "recipe" | "upload" | "qqmusic" | "none";
+export type BgSource = "recipe" | "upload" | "library" | "qqmusic" | "none";
 
 /** AI 定制纯音乐的基准频率（0 = 不叠加额外基准音） */
 export type BaseHz = 0 | 432 | 528 | 639 | 741 | 852;
@@ -68,8 +68,10 @@ export interface BgAudio {
   blob: Blob;
   name: string;
   url: string;
-  source: "upload" | "qqmusic";
+  source: "upload" | "library" | "qqmusic";
   durationSec: number; // 解码得到的时长，用于默认总时长与截断/铺满提示
+  /** 曲库曲目 id（bgSource==="library" 时） */
+  libraryId?: string;
 }
 
 /** 录音结果 */

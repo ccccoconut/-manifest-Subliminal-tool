@@ -19,8 +19,8 @@ const MOOD: Record<MoodKey, MoodProfile> = {
 
 const RHYTHM_AMP: Record<RhythmKey, number> = {
   none: 0,
-  light: 0.05,
-  strong: 0.11,
+  light: 0.012,
+  strong: 0.028,
 };
 
 export interface BuildOpts {
@@ -110,7 +110,7 @@ export function buildSoundscape(
       osc.frequency.value = freq;
       osc.detune.value = sign * m.detune;
       const ng = ctx.createGain();
-      ng.gain.value = 0.55 / notes.length;
+      ng.gain.value = 0.42 / notes.length;
       osc.connect(ng);
       ng.connect(filter);
       osc.start(t0);
@@ -125,8 +125,8 @@ export function buildSoundscape(
   noiseSrc.loop = true;
   const noiseFilter = ctx.createBiquadFilter();
   if (a.noiseType === "white" && meta.id === "focus") {
-    noiseFilter.type = "highpass";
-    noiseFilter.frequency.value = 180;
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.value = Math.max(700, cutoff * 0.55);
   } else {
     noiseFilter.type = "lowpass";
     noiseFilter.frequency.value = Math.max(900, cutoff * 0.8);
@@ -140,7 +140,7 @@ export function buildSoundscape(
   const breath = ctx.createOscillator();
   breath.frequency.value = 0.08;
   const breathDepth = ctx.createGain();
-  breathDepth.gain.value = a.noiseLevel * 0.4;
+  breathDepth.gain.value = a.noiseLevel * 0.22;
   breath.connect(breathDepth);
   breathDepth.connect(noiseGain.gain);
   breath.start(t0);
@@ -170,26 +170,32 @@ export function buildSoundscape(
     sources.push(sh);
   }
 
-  // ---- rhythmic pulse ----
+  // ---- rhythmic pulse（极轻呼吸起伏，避免鼓点感） ----
   const amp = RHYTHM_AMP[rhythm];
   if (amp > 0) {
     const pulseGain = ctx.createGain();
     pulseGain.gain.value = 0.0001;
+    const pulseFilter = ctx.createBiquadFilter();
+    pulseFilter.type = "lowpass";
+    pulseFilter.frequency.value = Math.min(220, cutoff * 0.35);
+    pulseFilter.Q.value = 0.5;
+    pulseFilter.connect(pulseGain);
     pulseGain.connect(master);
+
     const carrier = ctx.createOscillator();
     carrier.type = "sine";
-    carrier.frequency.value = a.rootFreq * pitchMul / 2;
-    carrier.connect(pulseGain);
+    carrier.frequency.value = a.rootFreq * pitchMul * 0.25;
+    carrier.connect(pulseFilter);
     carrier.start(t0);
     carrier.stop(t0 + duration + 0.1);
     sources.push(carrier);
 
-    const beat = 60 / a.tempo;
+    const beat = (60 / a.tempo) * 2;
     const end = t0 + duration - 3;
     for (let t = t0 + fadeIn; t < end; t += beat) {
       pulseGain.gain.setValueAtTime(0.0001, t);
-      pulseGain.gain.linearRampToValueAtTime(amp, t + beat * 0.14);
-      pulseGain.gain.exponentialRampToValueAtTime(0.0001, t + beat * 0.9);
+      pulseGain.gain.linearRampToValueAtTime(amp, t + beat * 0.42);
+      pulseGain.gain.linearRampToValueAtTime(0.0001, t + beat * 0.95);
     }
   }
 
@@ -288,7 +294,7 @@ export async function startPreview(
     rhythm: rhythm ?? voice.rhythm,
     startTime: t0,
     duration: 600,
-    baseGain: 0.85,
+    baseGain: 0.72,
     fadeOut: false,
     pitchSemitones,
   });

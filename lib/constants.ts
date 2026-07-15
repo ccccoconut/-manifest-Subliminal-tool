@@ -40,18 +40,18 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     name: "自信",
     en: "Confidence",
     scene: "面试 / 考试 / 汇报前",
-    design: "稳定节奏 · 温暖和声 · 人声更清晰",
-    blurb: "明亮坚定的挂留和弦与轻微脉冲，给你向前的底气。",
+    design: "温暖和声 · 轻柔垫音 · 无节拍干扰",
+    blurb: "明亮挂留和弦与绵软暖垫，给你向前的底气。",
     palette: ["#e8fbc4", "#cef595", "#b1ffec"],
     accent: "#4f9d2e",
     audio: {
       rootFreq: 164.81,
       chord: [0, 5, 7, 12],
-      brightness: 1950,
-      tempo: 72,
-      noiseType: "white",
-      noiseLevel: 0.05,
-      padLevel: 0.15,
+      brightness: 1650,
+      tempo: 58,
+      noiseType: "pink",
+      noiseLevel: 0.04,
+      padLevel: 0.14,
     },
   },
   {
@@ -79,18 +79,18 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     name: "专注",
     en: "Focus",
     scene: "学习 / 工作前",
-    design: "低干扰节拍 · 简洁旋律 · 减少歌词感",
-    blurb: "均匀的白噪与开放五度，帮你进入稳定的专注。",
+    design: "低干扰氛围 · 简洁和声 · 减少刺激感",
+    blurb: "柔和的粉噪与开放五度，帮你进入稳定的专注。",
     palette: ["#f4ffe0", "#cef595", "#ffe588"],
     accent: "#4f9d2e",
     audio: {
       rootFreq: 196.0,
       chord: [0, 7, 12],
-      brightness: 1250,
-      tempo: 60,
-      noiseType: "white",
-      noiseLevel: 0.12,
-      padLevel: 0.11,
+      brightness: 1050,
+      tempo: 48,
+      noiseType: "pink",
+      noiseLevel: 0.05,
+      padLevel: 0.12,
     },
   },
   {
@@ -105,8 +105,8 @@ export const SOUNDSCAPES: SoundscapeMeta[] = [
     audio: {
       rootFreq: 174.61,
       chord: [0, 4, 7, 14],
-      brightness: 1700,
-      tempo: 64,
+      brightness: 1450,
+      tempo: 52,
       noiseType: "white",
       noiseLevel: 0.04,
       padLevel: 0.14,
@@ -160,10 +160,10 @@ export const RECIPE_VOICE: Record<
   SoundscapeId,
   { mood: MoodKey; rhythm: RhythmKey }
 > = {
-  confidence: { mood: "firm", rhythm: "light" },
+  confidence: { mood: "gentle", rhythm: "none" },
   calm: { mood: "gentle", rhythm: "none" },
-  focus: { mood: "firm", rhythm: "light" },
-  reset: { mood: "bright", rhythm: "light" },
+  focus: { mood: "gentle", rhythm: "none" },
+  reset: { mood: "ethereal", rhythm: "none" },
   sleep: { mood: "gentle", rhythm: "none" }, // 兼容旧数据 → 实际走 calm
 };
 
@@ -230,6 +230,7 @@ export interface BgSourceMeta {
 export const BG_SOURCES: BgSourceMeta[] = [
   { key: "recipe", label: "AI生成纯音乐", emoji: "🎼", hint: "4 种氛围配方，可试听" },
   { key: "upload", label: "上传本地音频", emoji: "📁", hint: "" },
+  { key: "library", label: "曲库选择", emoji: "💿", hint: "可商用免版权曲目" },
   { key: "qqmusic", label: "官方音乐平台(暂未连接)", emoji: "🎵", hint: "" },
 ];
 

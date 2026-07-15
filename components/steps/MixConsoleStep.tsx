@@ -169,9 +169,10 @@ export default function MixConsoleStep({
   };
 
   const bgDur = bgAudio?.durationSec ?? 0;
-  const uploadMissingBg = params.bgSource === "upload" && !bgAudio;
+  const uploadMissingBg =
+    (params.bgSource === "upload" || params.bgSource === "library") && !bgAudio;
   const durationHint =
-    params.bgSource === "upload" && bgDur > 0
+    (params.bgSource === "upload" || params.bgSource === "library") && bgDur > 0
       ? params.totalDuration < Math.floor(bgDur)
         ? "合成音频时长小于原音频时长，将自动截断。"
         : params.totalDuration > Math.ceil(bgDur)
@@ -213,6 +214,11 @@ export default function MixConsoleStep({
               {bgAudio.name}
             </span>
           )}
+          {params.bgSource === "library" && bgAudio && (
+            <span className="ml-2 text-xs font-normal text-[var(--color-haze)]">
+              曲库 · {bgAudio.name}
+            </span>
+          )}
           {params.bgSource === "recipe" && (
             <span className="ml-2 text-xs font-normal text-[var(--color-haze)]">
               AI生成纯音乐
@@ -221,7 +227,9 @@ export default function MixConsoleStep({
         </p>
         {uploadMissingBg && (
           <p className="mb-3 text-xs text-amber-600">
-            未检测到上传的背景音频，请返回上一步重新选择文件。
+            {params.bgSource === "library"
+              ? "未选择曲库背景音，请返回上一步从播放列表中点选。"
+              : "未检测到上传的背景音频，请返回上一步重新选择文件。"}
           </p>
         )}
         {previewError && (
@@ -265,7 +273,7 @@ export default function MixConsoleStep({
               display={pct}
             />
             <p className="mt-1 text-[10px] leading-snug text-[var(--color-haze)]">
-              需要被背景音覆盖，只能听到极细微的沙沙声，不可听清内容。
+              潜听比例：人声整体低于背景音（最高约背景的 1/10），需被遮住、听不清字句。
             </p>
           </div>
         </div>
@@ -297,12 +305,14 @@ export default function MixConsoleStep({
         <p className="mb-3 text-sm font-semibold text-[var(--color-mist)]">合成效果</p>
         <Slider
           label="总时长"
-          value={params.totalDuration / 60}
+          value={Math.round((params.totalDuration / 60) * 10) / 10}
           min={0.5}
           max={30}
           step={0.5}
-          onChange={(v) => set({ totalDuration: Math.round(v * 60) })}
-          display={(v) => `${v} 分钟`}
+          onChange={(v) =>
+            set({ totalDuration: Math.round((Math.round(v * 10) / 10) * 60) })
+          }
+          display={(v) => `${v.toFixed(1)} 分钟`}
         />
         {durationHint && (
           <p className="mt-1 text-[10px] leading-snug text-amber-600">{durationHint}</p>

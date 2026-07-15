@@ -6,6 +6,8 @@ import AppTopBar from "@/components/ui/AppTopBar";
 import GooeyNav from "@/components/ui/GooeyNav";
 import WorkDetailModal from "@/components/ui/WorkDetailModal";
 import WorkGridPlayButton from "@/components/ui/WorkGridPlayButton";
+import GuideFeed from "@/components/GuideFeed";
+import FeedbackPanel from "@/components/FeedbackPanel";
 import type { TrackRecord } from "@/lib/history";
 import type { QuotaSnapshot } from "@/lib/quota/types";
 
@@ -17,10 +19,18 @@ export interface UserProfile {
 }
 
 const NAV_ITEMS = [
-  { label: "我的", href: "#" },
   { label: "slid", href: "#" },
+  { label: "说明", href: "#" },
+  { label: "我的", href: "#" },
+  { label: "反馈", href: "#" },
   { label: "社区", href: "#" },
 ];
+
+/** Default landing tab: 我的 */
+const TAB_MINE = 2;
+const TAB_SLID = 0;
+const TAB_GUIDE = 1;
+const TAB_FEEDBACK = 3;
 
 function Icon({
   children,
@@ -75,7 +85,8 @@ export default function HomeDashboard({
   onDeleteWork: (id: string) => void;
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [activeTabIndex, setActiveTabIndex] = useState(TAB_MINE);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -229,26 +240,38 @@ export default function HomeDashboard({
           ) : undefined
         }
         rightAction={
-          <button
-            onClick={onCreate}
-            disabled={quota !== null && !quota.canCreate}
-            className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-45"
-            title={
-              quota && !quota.canCreate
-                ? `今日次数已用完，约 ${quota.resetLabel} 重置`
-                : undefined
-            }
-          >
-            <Icon className="h-4 w-4">
-              <path d="M12 5v14M5 12h14" />
-            </Icon>
-            新建
-          </button>
+          activeTabIndex === TAB_MINE ? (
+            <button
+              onClick={onCreate}
+              disabled={quota !== null && !quota.canCreate}
+              className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-45"
+              title={
+                quota && !quota.canCreate
+                  ? `今日次数已用完，约 ${quota.resetLabel} 重置`
+                  : undefined
+              }
+            >
+              <Icon className="h-4 w-4">
+                <path d="M12 5v14M5 12h14" />
+              </Icon>
+              新建
+            </button>
+          ) : activeTabIndex === TAB_FEEDBACK ? (
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm"
+            >
+              <Icon className="h-4 w-4">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </Icon>
+              我要说
+            </button>
+          ) : undefined
         }
       />
 
       <section className="relative flex min-h-0 flex-1 flex-col px-4 pb-2 pt-2">
-        {activeTabIndex === 1 ? (
+        {activeTabIndex === TAB_SLID ? (
           <div className="min-h-0 flex-1" aria-hidden />
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
@@ -259,7 +282,7 @@ export default function HomeDashboard({
               transition={{ duration: 0.24, ease: "easeOut" }}
               className="flex min-h-0 flex-1 flex-col"
             >
-              {activeTabIndex === 0 ? (
+              {activeTabIndex === TAB_MINE ? (
                 records.length === 0 ? (
                   <div className="glass flex min-h-0 flex-1 flex-col items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-aura)]/12 text-[var(--color-aura)]">
@@ -331,6 +354,10 @@ export default function HomeDashboard({
                     </div>
                   </div>
                 )
+              ) : activeTabIndex === TAB_GUIDE ? (
+                <GuideFeed />
+              ) : activeTabIndex === TAB_FEEDBACK ? (
+                <FeedbackPanel open={feedbackOpen} onOpenChange={setFeedbackOpen} />
               ) : (
                 <div className="glass flex min-h-0 flex-1 flex-col items-center justify-center rounded-[var(--radius-2xl)] px-6 text-center">
                   <h1 className="text-xl font-bold text-[var(--color-mist)] sm:text-2xl">社区</h1>
@@ -339,7 +366,7 @@ export default function HomeDashboard({
               )}
             </motion.div>
 
-            {activeTabIndex === 0 && quota && (
+            {activeTabIndex === TAB_MINE && quota && (
               <p
                 className={`mt-2 shrink-0 rounded-2xl px-3 py-2 text-center text-xs ${
                   quota.canCreate
@@ -355,7 +382,7 @@ export default function HomeDashboard({
       </section>
 
       <div className="relative z-40 shrink-0 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1">
-        {activeTabIndex === 1 && (
+        {activeTabIndex === TAB_SLID && (
           <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-white drop-shadow-[0_1px_4px_rgba(18,63,42,0.35)]">
             沉浸式滑动背景&gt;&lt;
           </p>
@@ -365,7 +392,7 @@ export default function HomeDashboard({
             items={NAV_ITEMS}
             activeIndex={activeTabIndex}
             onActiveChange={setActiveTabIndex}
-            initialActiveIndex={0}
+            initialActiveIndex={TAB_MINE}
           />
         </div>
       </div>

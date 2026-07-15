@@ -66,9 +66,11 @@ export async function renderMix({
   const voiceBuf = await decodeAudio(voiceBlob);
 
   let bgBuf: AudioBuffer | null = null;
-  if (params.bgSource === "upload") {
+  if (params.bgSource === "upload" || params.bgSource === "library") {
     if (!bgBlob) {
-      throw new Error("未选择背景音频文件");
+      throw new Error(
+        params.bgSource === "library" ? "未选择曲库背景音" : "未选择背景音频文件"
+      );
     }
     try {
       bgBuf = await decodeAudio(bgBlob);
@@ -105,7 +107,8 @@ export async function renderMix({
 
   // ---- 音轨 1 · 背景音（潜听设计：不做 ducking，背景保持饱满，人声在其下） ----
   const hasBg =
-    params.bgSource === "recipe" || (params.bgSource === "upload" && !!bgBuf);
+    params.bgSource === "recipe" ||
+    ((params.bgSource === "upload" || params.bgSource === "library") && !!bgBuf);
 
   if (hasBg) {
     const bgVol = offline.createGain();
@@ -197,7 +200,14 @@ export async function renderMix({
   convolver.connect(wetGain);
   wetGain.connect(bus);
 
-  const vol = clamp(params.voiceVolume, 0, 1.2);
+  // 潜听人声：UI 0..1 映射为相对背景音的小声量，保证整轨都低于背景
+  // 滑杆 100% ≈ 背景音量的 10%；5% ≈ 背景的 0.5%，接近「仅沙沙感」
+  const bgGain = hasBg ? clamp(params.bgVolume, 0, 1) : 1;
+  const voiceUi = clamp(params.voiceVolume, 0, 1);
+  const SUBLIMINAL_RATIO = 0.1;
+  const vol = hasBg
+    ? voiceUi * bgGain * SUBLIMINAL_RATIO
+    : voiceUi * 0.22;
   const layers = 1 + clamp(Math.round(params.overlayTracks), 0, 3);
   const stagger = clamp(params.stagger, 0, 2);
   const voiceEnd = duration - 0.6;

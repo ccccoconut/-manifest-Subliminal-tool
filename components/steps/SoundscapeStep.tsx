@@ -8,6 +8,7 @@ import {
   RECIPE_VOICE,
   SOUNDSCAPE_PICKER,
 } from "@/lib/constants";
+import { MUSIC_LIBRARY, type LibraryTrack } from "@/lib/musicLibrary";
 import { startPreview, stopPreview } from "@/lib/audio/soundscapes";
 import { getAudioDuration } from "@/lib/audio/mixer";
 import { BgIcon } from "@/components/ui/icons";
@@ -34,8 +35,12 @@ export default function BackgroundStep({
   const [previewOn, setPreviewOn] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const [libraryError, setLibraryError] = useState("");
+  const [libraryLoading, setLibraryLoading] = useState<string | null>(null);
+  const [previewTrackId, setPreviewTrackId] = useState<string | null>(null);
   const [qqPick, setQqPick] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const libAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (previewOn && params.bgSource === "recipe") {
@@ -63,13 +68,26 @@ export default function BackgroundStep({
     params.baseHz,
   ]);
 
-  useEffect(() => () => stopPreview(), []);
+  useEffect(() => {
+    return () => {
+      stopPreview();
+      libAudioRef.current?.pause();
+      libAudioRef.current = null;
+    };
+  }, []);
 
   const set = (patch: Partial<MixParams>) => onParamsChange({ ...params, ...patch });
+
+  const stopLibraryPreview = () => {
+    libAudioRef.current?.pause();
+    libAudioRef.current = null;
+    setPreviewTrackId(null);
+  };
 
   const chooseSource = (s: BgSource) => {
     stopPreview();
     setPreviewOn(false);
+    stopLibraryPreview();
     set({ bgSource: s });
   };
 
@@ -82,7 +100,7 @@ export default function BackgroundStep({
     const f = e.target.files?.[0];
     if (!f) return;
     setUploadError("");
-    if (bgAudio?.url) URL.revokeObjectURL(bgAudio.url);
+    if (bgAudio?.url?.startsWith("blob:")) URL.revokeObjectURL(bgAudio.url);
     const durationSec = await getAudioDuration(f);
     if (durationSec <= 0) {
       setUploadError("无法解析该音频文件，请换 mp3 / wav / m4a 等常见格式后重试。");
@@ -98,7 +116,54 @@ export default function BackgroundStep({
     });
   };
 
-  const nextDisabled = params.bgSource === "upload" && !bgAudio;
+  const selectLibraryTrack = async (track: LibraryTrack) => {
+    setLibraryError("");
+    setLibraryLoading(track.id);
+    stopLibraryPreview();
+    try {
+      const res = await fetch(track.file);
+      if (!res.ok) throw new Error("fetch failed");
+      const blob = await res.blob();
+      const durationSec = await getAudioDuration(blob);
+      if (durationSec <= 0) throw new Error("bad duration");
+      if (bgAudio?.url?.startsWith("blob:")) URL.revokeObjectURL(bgAudio.url);
+      onBgAudioChange({
+        blob,
+        name: `${track.artist} - ${track.title}`,
+        url: URL.createObjectURL(blob),
+        source: "library",
+        durationSec,
+        libraryId: track.id,
+      });
+    } catch {
+      setLibraryError("曲目加载失败，请稍后重试。");
+      onBgAudioChange(null);
+    } finally {
+      setLibraryLoading(null);
+    }
+  };
+
+  const toggleLibraryPreview = (track: LibraryTrack) => {
+    if (previewTrackId === track.id) {
+      stopLibraryPreview();
+      return;
+    }
+    stopLibraryPreview();
+    const audio = new Audio(track.file);
+    libAudioRef.current = audio;
+    setPreviewTrackId(track.id);
+    audio.play().catch(() => {
+      setLibraryError("试听失败，请检查浏览器声音权限。");
+      stopLibraryPreview();
+    });
+    audio.onended = () => {
+      if (libAudioRef.current === audio) setPreviewTrackId(null);
+    };
+  };
+
+  const needsBgFile =
+    params.bgSource === "upload" || params.bgSource === "library";
+  const nextDisabled = needsBgFile && !bgAudio;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -109,7 +174,7 @@ export default function BackgroundStep({
       </div>
 
       {/* 背景音来源 */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid grid-cols-2 gap-3">
         {BG_SOURCES.map((s) => {
           const active = params.bgSource === s.key;
           return (
@@ -232,7 +297,7 @@ export default function BackgroundStep({
           {uploadError && (
             <p className="mb-3 text-xs text-amber-600">{uploadError}</p>
           )}
-          {bgAudio ? (
+          {bgAudio && bgAudio.source === "upload" ? (
             <div>
               <p className="text-sm text-[var(--color-mist)]">已选择：{bgAudio.name}</p>
               <p className="mt-1 text-[11px] text-[var(--color-haze)]">
@@ -253,6 +318,100 @@ export default function BackgroundStep({
             >
               选择本地音频文件
             </button>
+          )}
+        </div>
+      )}
+
+      {/* ---- library playlist ---- */}
+      {params.bgSource === "library" && (
+        <div className="glass mt-5 overflow-hidden rounded-2xl">
+          <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-mist)]">精选曲库</p>
+              <p className="text-[11px] text-[var(--color-haze)]">
+                {MUSIC_LIBRARY.length} 首 · 点击歌名选用，点播放试听
+              </p>
+            </div>
+            {bgAudio?.source === "library" && (
+              <span className="rounded-full bg-[var(--color-aura)]/15 px-2.5 py-1 text-[10px] font-medium text-[var(--color-mist-soft)]">
+                已选
+              </span>
+            )}
+          </div>
+
+          {libraryError && (
+            <p className="px-4 pt-3 text-xs text-amber-600">{libraryError}</p>
+          )}
+
+          <ul className="max-h-[min(52dvh,22rem)] divide-y divide-black/[0.04] overflow-y-auto overscroll-contain">
+            {MUSIC_LIBRARY.map((track, index) => {
+              const selected = bgAudio?.libraryId === track.id;
+              const loading = libraryLoading === track.id;
+              const previewing = previewTrackId === track.id;
+              return (
+                <li key={track.id}>
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2.5 transition-colors ${
+                      selected ? "bg-[var(--color-aura)]/12" : "hover:bg-black/[0.03]"
+                    }`}
+                  >
+                    <span className="w-5 shrink-0 text-center text-[11px] tabular-nums text-[var(--color-haze)]">
+                      {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleLibraryPreview(track)}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+                        previewing
+                          ? "bg-[var(--color-aura)] text-white"
+                          : "bg-black/[0.06] text-[var(--color-mist)] hover:bg-black/[0.1]"
+                      }`}
+                      aria-label={previewing ? "停止试听" : "试听"}
+                    >
+                      {previewing ? (
+                        <span className="h-2.5 w-2.5 rounded-[2px] bg-current" />
+                      ) : (
+                        <svg viewBox="0 0 24 24" className="ml-0.5 h-3.5 w-3.5 fill-current" aria-hidden>
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => selectLibraryTrack(track)}
+                      disabled={loading}
+                      className="min-w-0 flex-1 text-left disabled:opacity-60"
+                    >
+                      <p className="truncate text-sm font-medium text-[var(--color-mist)]">
+                        {track.title}
+                      </p>
+                      <p className="truncate text-[11px] text-[var(--color-haze)]">
+                        {track.artist}
+                      </p>
+                    </button>
+                    {loading ? (
+                      <span className="shrink-0 text-[10px] text-[var(--color-haze)]">加载中</span>
+                    ) : selected ? (
+                      <span className="shrink-0 text-[10px] font-semibold text-[var(--color-aura)]">
+                        ✓
+                      </span>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {bgAudio?.source === "library" && (
+            <div className="border-t border-black/[0.05] px-4 py-3">
+              <p className="text-xs text-[var(--color-mist-soft)]">
+                已选择：{bgAudio.name}
+                <span className="text-[var(--color-haze)]">
+                  {" "}
+                  · 约 {Math.round(bgAudio.durationSec)} 秒
+                </span>
+              </p>
+            </div>
           )}
         </div>
       )}
@@ -293,6 +452,7 @@ export default function BackgroundStep({
         <button
           onClick={() => {
             stopPreview();
+            stopLibraryPreview();
             onNext();
           }}
           disabled={nextDisabled}
