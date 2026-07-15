@@ -6,10 +6,27 @@ import AppTopBar from "@/components/ui/AppTopBar";
 import GooeyNav from "@/components/ui/GooeyNav";
 import WorkDetailModal from "@/components/ui/WorkDetailModal";
 import WorkGridPlayButton from "@/components/ui/WorkGridPlayButton";
-import GuideFeed from "@/components/GuideFeed";
-import FeedbackPanel from "@/components/FeedbackPanel";
+import dynamic from "next/dynamic";
 import type { TrackRecord } from "@/lib/history";
 import type { QuotaSnapshot } from "@/lib/quota/types";
+
+const GuideFeed = dynamic(() => import("@/components/GuideFeed"), {
+  ssr: false,
+  loading: () => (
+    <div className="glass flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-2xl)] text-sm text-[var(--color-haze)]">
+      加载说明…
+    </div>
+  ),
+});
+
+const FeedbackPanel = dynamic(() => import("@/components/FeedbackPanel"), {
+  ssr: false,
+  loading: () => (
+    <div className="glass flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-2xl)] text-sm text-[var(--color-haze)]">
+      加载反馈…
+    </div>
+  ),
+});
 
 export type ThemeMode = "light" | "dark";
 

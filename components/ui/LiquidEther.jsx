@@ -1010,15 +1010,21 @@ export default function LiquidEther({
     container.style.position = container.style.position || 'relative';
     container.style.overflow = container.style.overflow || 'hidden';
 
-    const webgl = new WebGLManager({
-      $wrapper: container,
-      autoDemo,
-      autoSpeed,
-      autoIntensity,
-      takeoverDuration,
-      autoResumeDelay,
-      autoRampDuration
-    });
+    let webgl;
+    try {
+      webgl = new WebGLManager({
+        $wrapper: container,
+        autoDemo,
+        autoSpeed,
+        autoIntensity,
+        takeoverDuration,
+        autoResumeDelay,
+        autoRampDuration
+      });
+    } catch (e) {
+      console.warn('[LiquidEther] WebGL init failed, skipping background', e);
+      return undefined;
+    }
     webglRef.current = webgl;
 
     const applyOptionsFromProps = () => {
@@ -1042,9 +1048,19 @@ export default function LiquidEther({
         sim.resize();
       }
     };
-    applyOptionsFromProps();
-
-    webgl.start();
+    try {
+      applyOptionsFromProps();
+      webgl.start();
+    } catch (e) {
+      console.warn('[LiquidEther] WebGL start failed', e);
+      try {
+        webgl.dispose();
+      } catch {
+        void 0;
+      }
+      webglRef.current = null;
+      return undefined;
+    }
 
     const io = new IntersectionObserver(
       entries => {

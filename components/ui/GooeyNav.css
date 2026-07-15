@@ -60,12 +60,24 @@
 
 .gooey-nav-container nav ul li a {
   display: block;
-  padding: 0.6em 0.35em;
-  font-size: 0.8125rem;
+  padding: 0.55em 0.2em;
+  font-size: 0.75rem;
   font-weight: 600;
   text-decoration: none;
   color: inherit;
   white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+  .gooey-nav-container nav ul {
+    gap: 0.1rem;
+    padding: 0.35rem 0.4rem;
+  }
+
+  .gooey-nav-container nav ul li a {
+    padding: 0.5em 0.12em;
+    font-size: 0.6875rem;
+  }
 }
 
 .gooey-nav-container nav ul li:focus-within:has(:focus-visible) {
