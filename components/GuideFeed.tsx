@@ -74,24 +74,37 @@ const ARTICLES: Article[] = [
   {
     id: "local-music",
     title: "本地音乐怎么办？",
-    summary: "官方平台不好下歌？这里告诉你更省事的做法。",
+    summary: "本地音频怎么变成可上传的 mp3？这里有一个简单办法。",
     body: (
       <>
         <p>
-          市面上的音乐 App 通常<strong>不允许</strong>把歌曲下载成可随意上传的
-          mp3，手机也不方便导出。对接官方曲库还需要版权与商务合作，短期内不现实。
+          很多音乐 App 下载下来的文件是加密格式，不能直接当背景音上传。
+          若你已经把音频存到手机或电脑本地，可以用下面的方式转成 mp3。
         </p>
         <h3>推荐做法</h3>
+        <ol>
+          <li>先把想用的音频下载 / 导出到本地；</li>
+          <li>
+            打开{" "}
+            <a
+              href="https://unlock-music.lmb520.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[var(--color-aura)] underline underline-offset-2"
+            >
+              unlock-music.lmb520.cn
+            </a>
+            ，一键免费转换为 mp3；
+          </li>
+          <li>回到本应用「选择背景音 → 上传本地音频」，选中转换好的 mp3 即可。</li>
+        </ol>
+        <h3>不想折腾文件时</h3>
         <p>
-          在「选择背景音」里优先用<strong>曲库选择</strong>或<strong>AI 生成纯音乐</strong>：免下载、免版权负担，也更适合潜听。
+          也可以直接用「曲库选择」或「AI 生成纯音乐」：免下载、免转换，更适合快速做潜听。
         </p>
-        <h3>什么时候才上传本地音频？</h3>
-        <ul>
-          <li>你自己录的氛围音、白噪、雨声等；</li>
-          <li>明确拥有使用权的免版权 / 授权素材；</li>
-          <li>电脑里已有的 wav / m4a / mp3，用文件选择导入。</li>
-        </ul>
-        <p className="note">请勿上传未获授权的商业歌曲。若无法上传，使用曲库或 AI 生成即可完成全部创作。</p>
+        <p className="note">
+          请仅转换你已购 / 已获授权的音频，并自行确认版权合规。请勿上传未获授权的商业歌曲。
+        </p>
       </>
     ),
   },

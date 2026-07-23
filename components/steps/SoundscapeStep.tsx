@@ -253,10 +253,7 @@ export default function BackgroundStep({
 
           {/* 赫兹基准频率 */}
           <div className="mt-4">
-            <p className="text-xs font-medium text-[var(--color-haze)]">赫兹基准频率</p>
-            <p className="mb-2 mt-1 text-[11px] leading-relaxed text-[var(--color-haze)]">
-              在配方上叠加一层基准音色。切换后可边试听边对比明暗与厚度差异。
-            </p>
+            <p className="mb-2 text-xs font-medium text-[var(--color-haze)]">赫兹基准频率</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {BASE_HZ_OPTIONS.map((o) => {
                 const active = params.baseHz === o.hz;

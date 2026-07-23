@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { renderMix } from "@/lib/audio/mixer";
+import {
+  MIX_PRESETS,
+  applyMixPreset,
+  matchMixPresetId,
+} from "@/lib/mixPresets";
 import type { BgAudio, MixParams } from "@/lib/types";
 
 function Slider({
@@ -203,6 +208,35 @@ export default function MixConsoleStep({
               ? "■ 停止试听"
               : "▶ 试听片段"}
         </button>
+      </div>
+
+      {/* 一键调参 */}
+      <div className="glass mt-4 rounded-2xl px-4 py-3">
+        <p className="text-xs font-semibold text-[var(--color-mist)]">一键调参</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {MIX_PRESETS.map((preset) => {
+            const active = matchMixPresetId(params) === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => onParamsChange(applyMixPreset(params, preset))}
+                className={`rounded-xl px-3 py-2.5 text-left transition-all ${
+                  active
+                    ? "bg-[var(--color-aura)]/20 ring-1 ring-[var(--color-aura)]/60"
+                    : "bg-black/[0.05] hover:bg-black/[0.07]"
+                }`}
+              >
+                <span className="block text-xs font-semibold text-[var(--color-mist)]">
+                  {preset.name}
+                </span>
+                <span className="mt-0.5 block text-[10px] leading-snug text-[var(--color-haze)]">
+                  {preset.blurb}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 背景音素材 */}
